@@ -50,7 +50,9 @@ def create_chemical_audit(request):
     if request.method == "POST":
         form = ChemicalAuditForm(request.POST)
         if form.is_valid():
-            form.save()
+            audit = form.save(commit=False)
+            audit.audit_type = 'chemical_waste' 
+            audit.save()
             return redirect("home")
     return redirect("home")
 
@@ -58,6 +60,8 @@ def create_monthly_audit(request):
     if request.method == "POST":
         form = MonthlyAuditForm(request.POST)
         if form.is_valid():
+            audit = form.save(commit=False)
+            audit.audit_type = 'monthly' 
             form.save()
             return redirect("home")
     return redirect("home")
@@ -66,6 +70,8 @@ def create_biannual_audit(request):
     if request.method == "POST":
         form = BiannualAuditForm(request.POST)
         if form.is_valid():
+            audit = form.save(commit=False)
+            audit.audit_type = 'biannual' 
             form.save()
             return redirect("home")
     return redirect("home")
@@ -74,73 +80,74 @@ def create_hazardous_audit(request):
     if request.method == "POST":
         form = HazardousWasteForm(request.POST)
         if form.is_valid():
+            audit = form.save(commit=False)
+            audit.audit_type = 'hazardous' 
             form.save()
             return redirect("home")
     return redirect("home")
 
 # === NEW/MODIFIED VIEWS FOR EDITING ===
 
-@login_required 
-# @csrf_exempt # Only for development, if you're not passing CSRF token with fetch/AJAX posts
+@login_required
 def get_audit_data(request, audit_id):
     try:
         audit = get_object_or_404(Audit, id=audit_id)
-        audit_type_str = audit.audit_type # This is crucial: get the actual type from the audit instance
+        audit_type_str = audit.audit_type
+
+        # --- IMPORTANT DEBUG PRINTS ---
+        print(f"\n--- DEBUGGING GET_AUDIT_DATA FOR AUDIT ID: {audit_id} ---")
+        print(f"1. Actual Audit Type from DB: '{audit_type_str}'")
 
         form_class = AUDIT_TYPE_FORMS.get(audit_type_str)
 
         if not form_class:
-            # Handle unknown audit types gracefully
+            print(f"ERROR: No specific form found for audit type '{audit_type_str}'")
             return JsonResponse({"error": "No specific form found for this audit type", "audit_type": audit_type_str}, status=400)
 
-        # Instantiate the correct form with the audit instance.
-        # This form instance now knows which fields are relevant via its Meta.fields
+        print(f"2. Resolved Form Class: {form_class.__name__}")
+
         form = form_class(instance=audit)
 
         serialized_data = {}
-        # Iterate only through the fields defined in the specific ModelForm's Meta.fields
+        print("3. Fields being processed by the selected form:")
         for field_name, form_field in form.fields.items():
-            # Get the value directly from the Audit model instance
             value = getattr(audit, field_name, None)
 
-            # --- Serialization logic for JsonResponse ---
-            # This handles different Python types to ensure they are JSON serializable
+            # Your existing serialization logic
             if isinstance(value, datetime.date):
-                serialized_data[field_name] = value.isoformat() # Format dates as 'YYYY-MM-DD'
+                serialized_data[field_name] = value.isoformat()
             elif isinstance(value, datetime.datetime):
-                serialized_data[field_name] = value.isoformat() # Format datetimes as 'YYYY-MM-DDTHH:MM:SS'
+                serialized_data[field_name] = value.isoformat()
             elif isinstance(value, (bool, int, float, str)):
                 serialized_data[field_name] = value
             elif value is None:
                 serialized_data[field_name] = None
             else:
-                # Handle other types if necessary (e.g., ChoiceFields, ForeignKeys)
-                # For ChoiceFields, you might send the current chosen value (string/int)
-                # For ForeignKeys, you might send the related object's primary key (value.pk) or __str__ representation.
-                if hasattr(value, 'pk'): # For related objects (ForeignKeys)
+                if hasattr(value, 'pk'):
                     serialized_data[field_name] = value.pk
                 else:
                     serialized_data[field_name] = str(value) # Fallback to string for complex objects
+            print(f"   - Field Name: '{field_name}', Value: '{serialized_data.get(field_name)}'")
 
-        # Always include these for frontend logic
         serialized_data['id'] = audit.id
-        serialized_data['audit_type'] = audit_type_str
-        # Include AuditID if it's a field in your Audit model and you want to display it
+        serialized_data['audit_type'] = audit_type_str # Ensure audit_type is in the final data
         if hasattr(audit, 'AuditID'):
             serialized_data['AuditID'] = audit.AuditID
-        # Include date if it's a field in your Audit model and you want to display it
         if hasattr(audit, 'date'):
              serialized_data['date'] = audit.date.isoformat() if isinstance(audit.date, datetime.date) else str(audit.date)
 
+        print(f"4. Final JSON Data Sent to Frontend: {serialized_data}")
+        print("--- END DEBUGGING GET_AUDIT_DATA ---")
 
         return JsonResponse(serialized_data)
 
     except Audit.DoesNotExist:
+        print(f"ERROR: Audit with ID {audit_id} not found (404).")
         return JsonResponse({"error": "Audit not found"}, status=404)
     except Exception as e:
-        # It's good practice to print the full traceback during development
         import traceback
         traceback.print_exc()
+        print(f"UNEXPECTED ERROR in get_audit_data for audit ID {audit_id}: {e}")
         return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
 

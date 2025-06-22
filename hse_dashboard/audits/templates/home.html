@@ -194,62 +194,74 @@
 
 
     function loadAuditData(auditId) {
-      fetch(`/audits/get-audit/${auditId}/`)
-        .then(response => {
-          if (!response.ok) {
-            // Log the error and possibly show an alert
-            console.error('Failed to fetch audit data:', response.status, response.statusText);
-            alert('Failed to load audit data. Please try again.');
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          const form = document.getElementById('editAuditForm');
-          const formFieldsContainer = document.getElementById('editAuditFormFields');
-          const modalTitle = document.getElementById('editAuditModalTitle');
+  fetch(`/audits/get-audit/${auditId}/`)
+    .then(response => {
+      if (!response.ok) {
+        console.error('Failed to fetch audit data:', response.status, response.statusText);
+        alert('Failed to load audit data. Please try again.');
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      // --- IMPORTANT DEBUG CONSOLE LOGS ---
+      console.log("\n--- FRONTEND: RECEIVED AUDIT DATA ---");
+      console.log("1. Raw JSON Data Received:", data);
+      console.log("2. Audit Type from Received Data:", data.audit_type);
+      console.log("3. Fields and Values being rendered:");
+      for (const [key, value] of Object.entries(data)) {
+        // Exclude 'id', 'csrfmiddlewaretoken', 'auditid' from logging if not rendering as separate fields
+        if (key === 'id' || key === 'csrfmiddlewaretoken' || key === 'auditid') {
+            if (key === 'id') continue;
+            if (key === 'csrfmiddlewaretoken') continue;
+        }
+        console.log(`   - Field: '${key}', Value: '${value}'`);
+      }
+      console.log("--- END FRONTEND: RECEIVED AUDIT DATA ---");
+      // --- END DEBUG CONSOLE LOGS ---
 
-          form.action = `/audits/edit-audit/${auditId}/`;
-          formFieldsContainer.innerHTML = ''; // Clear previous fields
 
-          // Set the modal title based on the audit type
-          if (data.audit_type) {
-            modalTitle.textContent = `Edit ${data.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} Audit`;
-          } else {
-            modalTitle.textContent = 'Edit Audit';
-          }
+      const form = document.getElementById('editAuditForm');
+      const formFieldsContainer = document.getElementById('editAuditFormFields');
+      const modalTitle = document.getElementById('editAuditModalTitle');
 
+      form.action = `/audits/edit-audit/${data.id}/`;
+      formFieldsContainer.innerHTML = ''; // Clear previous fields
 
-          // Dynamically create form fields based on the received data
-          for (const [key, value] of Object.entries(data)) {
-            // Skip 'id', 'csrfmiddlewaretoken', and 'audit_type' (or any other non-form fields)
-            if (key === 'id' || key === 'csrfmiddlewaretoken' || key === 'audit_type' || key === 'auditid') {
-                continue;
-            }
+      if (data.audit_type) {
+        modalTitle.textContent = `Edit ${data.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} Audit`;
+      } else {
+        modalTitle.textContent = 'Edit Audit';
+      }
 
-            let fieldType = 'text'; // Default to text
-            if (typeof value === 'boolean') {
-                fieldType = 'boolean';
-            } else if (typeof value === 'number') {
-                fieldType = 'number';
-            } else if (key.includes('date')) { // Basic heuristic for date fields
-                fieldType = 'date';
-            } else if (key.includes('remarks') || key.includes('action')) { // Basic heuristic for textarea
-                fieldType = 'textarea';
-            }
-            // You might need more sophisticated mapping based on your model field types
+      for (const [key, value] of Object.entries(data)) {
+        if (key === 'id' || key === 'csrfmiddlewaretoken' || key === 'auditid') { // 'auditid' is often redundant if 'AuditID' is used from model
+            if (key === 'id') continue;
+            if (key === 'csrfmiddlewaretoken') continue;
+        }
 
-            formFieldsContainer.innerHTML += createFormFieldHtml(key, value, fieldType);
-          }
+        let fieldType = 'text'; // Default
+        if (typeof value === 'boolean') {
+            fieldType = 'boolean';
+        } else if (typeof value === 'number') {
+            fieldType = 'number';
+        } else if (key.includes('date')) { // Consider stricter date check if 'date' is part of other field names
+            fieldType = 'date';
+        } else if (key.includes('remarks') || key.includes('description') || key.includes('comment') || key.includes('action')) {
+            fieldType = 'textarea';
+        }
+        // Assuming createFormFieldHtml handles basic types correctly
+        formFieldsContainer.innerHTML += createFormFieldHtml(key, value, fieldType);
+      }
 
-          closeModal('editAuditModal');
-          openModal('editAuditFormModal');
-        })
-        .catch(error => {
-          console.error('Error loading audit data:', error);
-          alert('Failed to load audit data. Please try again.');
-        });
-    }
+      closeModal('editAuditModal');
+      openModal('editAuditFormModal');
+    })
+    .catch(error => {
+      console.error('Error loading audit data:', error);
+      alert('Failed to load audit data. Please try again.');
+    });
+}
   </script>
 </body>
 </html>
