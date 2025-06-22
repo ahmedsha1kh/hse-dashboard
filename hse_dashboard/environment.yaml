@@ -1,0 +1,11 @@
+name: dashboard
+channels:
+ - conda-forge
+ - default
+dependencies:
+ - python=3.11
+ - numpy
+ - django
+ - pip
+# - pip:
+   

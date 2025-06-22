@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HSE Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* ... (Your existing CSS remains the same) ... */
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background-color: #f3f4f6; color: #333; height: 100vh; overflow: hidden; }
+    .container { display: flex; height: 100vh; }
+    .sidebar {
+      width: 220px; background-color: #ffffff; padding: 20px;
+      display: flex; flex-direction: column; gap: 16px;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); overflow-y: auto;
+    }
+    .sidebar h2 { font-size: 18px; margin-bottom: 8px; }
+    .sidebar button {
+      padding: 10px; font-size: 14px; background-color: #e5e7eb;
+      border: none; border-radius: 5px; cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .sidebar button:hover { background-color: #d1d5db; }
+    .main { flex: 1; padding: 30px; overflow-y: auto; }
+    .title { text-align: center; font-size: 32px; font-weight: bold; margin-bottom: 30px; }
+    .chart-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px; margin-bottom: 40px;
+    }
+    .chart-box {
+      background-color: #ffffff; padding: 20px; height: 200px;
+      border-radius: 10px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .modal {
+      display: flex; justify-content: center; align-items: center;
+      position: fixed; z-index: 1000; left: 0; top: 0;
+      width: 100%; height: 100%; overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    .modal.hidden { display: none; }
+    .modal-content {
+      background-color: white; padding: 30px; border-radius: 10px;
+      width: 400px; max-width: 90%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+    .modal .close {
+      position: absolute; top: 10px; right: 16px;
+      font-size: 24px; font-weight: bold; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h2>Audits</h2>
+      <button onclick="openModal('chooseAuditTypeModal')">Create Audit</button>
+      <button onclick="openModal('editAuditModal')">Edit Audit</button>
+      <h2>Users</h2>
+      <button onclick="openModal('createUserModal')">Create User</button>
+      <button onclick="openModal('editUserModal')">Edit User</button>
+      <button onclick="openModal('deleteUserModal')">Delete User</button>
+    </div>
+
+    <div class="main">
+      <div class="title">HSE Dashboard</div>
+      <div class="chart-grid">
+        <div class="chart-box">Chart Placeholder 1</div>
+        <div class="chart-box">Chart Placeholder 2</div>
+        <div class="chart-box">Chart Placeholder 3</div>
+        <div class="chart-box">Chart Placeholder 4</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="chooseAuditTypeModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('chooseAuditTypeModal')">&times;</span>
+      <h2>Select Audit Type</h2>
+      <button onclick="switchModal('chooseAuditTypeModal', 'chemicalAuditModal')">Chemical Audit</button><br><br>
+      <button onclick="switchModal('chooseAuditTypeModal', 'monthlyAuditModal')">Monthly Audit</button><br><br>
+      <button onclick="switchModal('chooseAuditTypeModal', 'biannualAuditModal')">Biannual Audit</button><br><br>
+      <button onclick="switchModal('chooseAuditTypeModal', 'hazardousAuditModal')">Hazardous Waste Audit</button>
+    </div>
+  </div>
+
+  <div id="chemicalAuditModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('chemicalAuditModal')">&times;</span>
+      <h2>Chemical Audit</h2>
+      <form method="post" action="{% url 'create_chemical_audit' %}">
+        {% csrf_token %}
+        {{ chemical_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="monthlyAuditModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('monthlyAuditModal')">&times;</span>
+      <h2>Monthly Audit</h2>
+      <form method="post" action="{% url 'create_monthly_audit' %}">
+        {% csrf_token %}
+        {{ monthly_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="biannualAuditModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('biannualAuditModal')">&times;</span>
+      <h2>Biannual Audit</h2>
+      <form method="post" action="{% url 'create_biannual_audit' %}">
+        {% csrf_token %}
+        {{ biannual_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="hazardousAuditModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('hazardousAuditModal')">&times;</span>
+      <h2>Hazardous Waste Audit</h2>
+      <form method="post" action="{% url 'create_hazardous_audit' %}">
+        {% csrf_token %}
+        {{ hazardous_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="editAuditModal" class="modal hidden">
+    <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+      <span class="close" onclick="closeModal('editAuditModal')">&times;</span>
+      <h2>Select Audit to Edit</h2>
+      <ul>
+        {% for audit in audits %}
+          <li ondblclick="loadAuditData({{ audit.id }})">
+            {{ audit.AuditID }} &mdash; {{ audit.audit_type }} &mdash; {{ audit.date }}
+            <button type="button" onclick="loadAuditData({{ audit.id }})">Select</button>
+          </li>
+        {% empty %}
+          <li>No audits available.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div id="editAuditFormModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('editAuditFormModal')">&times;</span>
+      <h2 id="editAuditModalTitle">Edit Audit</h2> {# Dynamic title based on audit type #}
+      <form id="editAuditForm" method="post">
+        {% csrf_token %}
+        <div id="editAuditFormFields"></div>
+        <button type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) {
+      document.getElementById(id).classList.remove("hidden");
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add("hidden");
+    }
+    function switchModal(closeId, openId) {
+      closeModal(closeId);
+      openModal(openId);
+    }
+
+    // Function to convert Django form field data (from JSON) into HTML
+    function createFormFieldHtml(fieldName, fieldValue, fieldType) {
+        let inputHtml = '';
+        if (fieldType === 'boolean') {
+            inputHtml = `<input type="checkbox" name="${fieldName}" ${fieldValue ? 'checked' : ''}>`;
+        } else if (fieldType === 'date') {
+            inputHtml = `<input type="date" name="${fieldName}" value="${fieldValue || ''}">`;
+        } else if (fieldType === 'number') {
+            inputHtml = `<input type="number" name="${fieldName}" value="${fieldValue || ''}">`;
+        } else if (fieldType === 'text' || fieldType === 'string') {
+            inputHtml = `<input type="text" name="${fieldName}" value="${fieldValue || ''}">`;
+        } else if (fieldType === 'textarea') {
+            inputHtml = `<textarea name="${fieldName}">${fieldValue || ''}</textarea>`;
+        }
+        // Add more field types as needed (e.g., select, radio)
+
+        // For simplicity, wrap in a paragraph similar to .as_p
+        return `<p><label for="id_${fieldName}">${fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}:</label>${inputHtml}</p>`;
+    }
+
+
+    function loadAuditData(auditId) {
+      fetch(`/audits/get-audit/${auditId}/`)
+        .then(response => {
+          if (!response.ok) {
+            // Log the error and possibly show an alert
+            console.error('Failed to fetch audit data:', response.status, response.statusText);
+            alert('Failed to load audit data. Please try again.');
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          const form = document.getElementById('editAuditForm');
+          const formFieldsContainer = document.getElementById('editAuditFormFields');
+          const modalTitle = document.getElementById('editAuditModalTitle');
+
+          form.action = `/audits/edit-audit/${auditId}/`;
+          formFieldsContainer.innerHTML = ''; // Clear previous fields
+
+          // Set the modal title based on the audit type
+          if (data.audit_type) {
+            modalTitle.textContent = `Edit ${data.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} Audit`;
+          } else {
+            modalTitle.textContent = 'Edit Audit';
+          }
+
+
+          // Dynamically create form fields based on the received data
+          for (const [key, value] of Object.entries(data)) {
+            // Skip 'id', 'csrfmiddlewaretoken', and 'audit_type' (or any other non-form fields)
+            if (key === 'id' || key === 'csrfmiddlewaretoken' || key === 'audit_type' || key === 'auditid') {
+                continue;
+            }
+
+            let fieldType = 'text'; // Default to text
+            if (typeof value === 'boolean') {
+                fieldType = 'boolean';
+            } else if (typeof value === 'number') {
+                fieldType = 'number';
+            } else if (key.includes('date')) { // Basic heuristic for date fields
+                fieldType = 'date';
+            } else if (key.includes('remarks') || key.includes('action')) { // Basic heuristic for textarea
+                fieldType = 'textarea';
+            }
+            // You might need more sophisticated mapping based on your model field types
+
+            formFieldsContainer.innerHTML += createFormFieldHtml(key, value, fieldType);
+          }
+
+          closeModal('editAuditModal');
+          openModal('editAuditFormModal');
+        })
+        .catch(error => {
+          console.error('Error loading audit data:', error);
+          alert('Failed to load audit data. Please try again.');
+        });
+    }
+  </script>
+</body>
+</html>

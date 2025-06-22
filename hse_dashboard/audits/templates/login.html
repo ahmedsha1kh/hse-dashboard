@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HSE Dashboard | Log In</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+    <div class="background">
+        <div class="login-container">
+            <h1>HSE Dashboard</h1>
+            <h2>Log In</h2>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {{ form.non_field_errors }}
+
+                <input type="text" name="username" maxlength="20" placeholder="Enter Username" value="{{ form.username.value|default_if_none:'' }}" required>
+                {{ form.username.errors }}
+
+                <input type="password" name="password" maxlength="20" placeholder="Enter Password" required>
+                {{ form.password.errors }}
+
+                <p class="note">Use up to 20 characters without white spaces.</p>
+                <button type="submit" class="login-btn">Log In</button>
+            </form>
+
+            <button class="guest-btn">Continue as Guest</button>
+        </div>
+    </div>
+</body>
+</html>
