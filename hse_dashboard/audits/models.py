@@ -25,6 +25,19 @@ class Audit(models.Model):
 
     AuditID = models.CharField(max_length=5, unique=True, editable=False, blank=True)
 
+    LOCATION_CHOICES = [
+        ('KBD Fisheries Lab', 'KBD Fisheries Lab'),
+        ('KBD Algae Lab', 'KBD Algae Lab'),
+        ('KBD Aquaculture Lab', 'KBD Aquaculture Lab'),
+        ('KBD Algae Facility Laboratory', 'KBD Algae Facility Laboratory'),
+        ('Duba Lab', 'Duba Lab'),
+        ('Jizan Lab', 'Jizan Lab'),
+        ('Jubail Lab', 'Jubail Lab'),
+        ('Al Raes Sea Cage Farms', 'Al Raes Sea Cage Farms'),
+        ('Algae Facility Phase 2', 'Algae Facility Phase 2'),
+    ]
+    location = models.CharField(max_length=30, choices=LOCATION_CHOICES, blank=True, null=True)
+
     # Consider adding a user field for who created/last modified the audit (good practice)
     # user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     # created_at = models.DateTimeField(auto_now_add=True)

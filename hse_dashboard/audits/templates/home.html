@@ -5,7 +5,7 @@
   <title>HSE Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* ... (Your existing CSS remains the same) ... */
+    /* Your existing CSS (as updated in the last turn for modal fitting) */
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background-color: #f3f4f6; color: #333; height: 100vh; overflow: hidden; }
     .container { display: flex; height: 100vh; }
@@ -31,21 +31,95 @@
       background-color: #ffffff; padding: 20px; height: 200px;
       border-radius: 10px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
+
+    /* UPDATED/NEW MODAL CSS FOR BETTER FIT (as per last turn) */
     .modal {
-      display: flex; justify-content: center; align-items: center;
+      display: none; justify-content: center; align-items: center;
       position: fixed; z-index: 1000; left: 0; top: 0;
       width: 100%; height: 100%; overflow: auto;
       background-color: rgba(0, 0, 0, 0.5);
+      padding: 20px; box-sizing: border-box;
     }
     .modal.hidden { display: none; }
     .modal-content {
       background-color: white; padding: 30px; border-radius: 10px;
-      width: 400px; max-width: 90%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      width: 90%; max-width: 600px;
+      max-height: calc(100vh - 40px); overflow-y: auto;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       position: relative;
+      display: flex; flex-direction: column;
     }
     .modal .close {
       position: absolute; top: 10px; right: 16px;
-      font-size: 24px; font-weight: bold; cursor: pointer;
+      font-size: 24px; font-weight: bold; cursor: pointer; color: #aaa;
+    }
+    .modal .close:hover, .modal .close:focus {
+      color: black; text-decoration: none;
+    }
+
+    /* Styles for the lists within modals (Edit/Delete selection) */
+    .modal-list ul { list-style: none; padding: 0; margin: 0; }
+    .modal-list li {
+        padding: 10px 0; border-bottom: 1px solid #eee;
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+    }
+    .modal-list li:last-child { border-bottom: none; }
+    .modal-list li span { flex-grow: 1; margin-right: 10px; word-break: break-all; }
+    .modal-list li button {
+        padding: 5px 10px; background-color: #007bff; color: white;
+        border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.2s; flex-shrink: 0;
+    }
+    .modal-list li button:hover { background-color: #0056b3; }
+
+    /* Styles for generated form fields in create/edit modal */
+    .modal-content form p { margin-bottom: 15px; }
+    .modal-content form label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .modal-content form input[type="text"],
+    .modal-content form input[type="number"],
+    .modal-content form input[type="date"],
+    .modal-content form input[type="email"],
+    .modal-content form input[type="password"],
+    .modal-content form textarea,
+    .modal-content form select {
+        width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+    }
+    .modal-content form input[type="checkbox"] { margin-top: 5px; margin-right: 8px; }
+    .modal-content form button[type="submit"] {
+        background-color: #28a745; color: white; padding: 10px 20px;
+        border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 15px;
+        transition: background-color 0.2s; width: auto;
+    }
+    .modal-content form button[type="submit"]:hover { background-color: #218838; }
+
+    /* Styles for read-only audit/user details in delete confirmation modal */
+    .details-view div { margin-bottom: 10px; }
+    .details-view label { font-weight: bold; display: block; margin-bottom: 5px; }
+    .details-view span {
+        display: block; padding: 8px; border: 1px solid #e9ecef;
+        border-radius: 4px; background-color: #f8f9fa; word-wrap: break-word;
+    }
+
+    /* Delete Button Specific Style */
+    #confirmDeleteButton, #confirmDeleteUserButton { /* Apply to both audit and user delete buttons */
+      background-color: #dc3545; margin-top: 20px; width: 100%;
+      padding: 10px; font-size: 16px; border: none; border-radius: 5px;
+      color: white; cursor: pointer; transition: background-color 0.2s;
+    }
+    #confirmDeleteButton:hover, #confirmDeleteUserButton:hover {
+      background-color: #c82333;
+    }
+
+    /* Style for checkbox select multiple (groups) */
+    .checkbox-select-multiple label {
+        display: inline-block;
+        margin-right: 15px;
+        font-weight: normal;
+    }
+    .checkbox-select-multiple input[type="checkbox"] {
+        margin-right: 5px;
+    }
+    .modal-content form ul.errorlist {
+        color: red; list-style-type: none; padding: 0; margin-top: 5px; font-size: 0.9em;
     }
   </style>
 </head>
@@ -54,11 +128,12 @@
     <div class="sidebar">
       <h2>Audits</h2>
       <button onclick="openModal('chooseAuditTypeModal')">Create Audit</button>
-      <button onclick="openModal('editAuditModal')">Edit Audit</button>
+      <button onclick="openChooseEditAuditModal()">Edit Audit</button>
+      <button onclick="openChooseDeleteAuditModal()">Delete Audit</button>
       <h2>Users</h2>
       <button onclick="openModal('createUserModal')">Create User</button>
-      <button onclick="openModal('editUserModal')">Edit User</button>
-      <button onclick="openModal('deleteUserModal')">Delete User</button>
+      <button onclick="openChooseEditUserModal()">Edit User</button>
+      <button onclick="openChooseDeleteUserModal()">Delete User</button>
     </div>
 
     <div class="main">
@@ -72,6 +147,7 @@
     </div>
   </div>
 
+  <!-- All your existing audit modals -->
   <div id="chooseAuditTypeModal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal('chooseAuditTypeModal')">&times;</span>
@@ -131,27 +207,29 @@
     </div>
   </div>
 
-  <div id="editAuditModal" class="modal hidden">
+  <div id="chooseEditAuditModal" class="modal hidden">
     <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
-      <span class="close" onclick="closeModal('editAuditModal')">&times;</span>
+      <span class="close" onclick="closeModal('chooseEditAuditModal')">&times;</span>
       <h2>Select Audit to Edit</h2>
-      <ul>
-        {% for audit in audits %}
-          <li ondblclick="loadAuditData({{ audit.id }})">
-            {{ audit.AuditID }} &mdash; {{ audit.audit_type }} &mdash; {{ audit.date }}
-            <button type="button" onclick="loadAuditData({{ audit.id }})">Select</button>
-          </li>
-        {% empty %}
-          <li>No audits available.</li>
-        {% endfor %}
-      </ul>
+      <div id="editAuditListContainer" class="modal-list">
+        <ul>
+            {% for audit in audits %}
+              <li ondblclick="loadAuditData({{ audit.id }})">
+                <span>{{ audit.AuditID }} &mdash; {{ audit.audit_type }} &mdash; {{ audit.date }}</span>
+                <button type="button" onclick="loadAuditData({{ audit.id }})">Select</button>
+              </li>
+            {% empty %}
+              <li>No audits available.</li>
+            {% endfor %}
+        </ul>
+      </div>
     </div>
   </div>
 
   <div id="editAuditFormModal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal('editAuditFormModal')">&times;</span>
-      <h2 id="editAuditModalTitle">Edit Audit</h2> {# Dynamic title based on audit type #}
+      <h2 id="editAuditModalTitle">Edit Audit</h2>
       <form id="editAuditForm" method="post">
         {% csrf_token %}
         <div id="editAuditFormFields"></div>
@@ -160,108 +238,566 @@
     </div>
   </div>
 
+  <div id="chooseDeleteAuditModal" class="modal hidden">
+    <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+      <span class="close" onclick="closeModal('chooseDeleteAuditModal')">&times;</span>
+      <h2>Select Audit to Delete</h2>
+      <div id="deleteAuditListContainer" class="modal-list">
+          <ul>
+              {% for audit in audits %}
+                <li ondblclick="loadAuditDataForDeleteConfirmation({{ audit.id }})">
+                  <span>{{ audit.AuditID }} &mdash; {{ audit.audit_type }} &mdash; {{ audit.date }}</span>
+                  <button type="button" onclick="loadAuditDataForDeleteConfirmation({{ audit.id }})">Select</button>
+                </li>
+              {% empty %}
+                <li>No audits available.</li>
+              {% endfor %}
+          </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteConfirmationModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('deleteConfirmationModal')">&times;</span>
+      <h2 id="deleteAuditModalTitle">Confirm Delete Audit</h2>
+      <div id="deleteAuditDetailsContainer" class="details-view">
+        <!-- Audit details will be loaded here (read-only) -->
+      </div>
+      <button id="confirmDeleteButton" class="delete-button" data-audit-id="">Confirm Delete</button>
+    </div>
+  </div>
+
+
+  <!-- ************************************************************* -->
+  <!-- NEW: USER MANAGEMENT MODALS -->
+  <!-- ************************************************************* -->
+
+  <!-- Create User Modal -->
+  <div id="createUserModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('createUserModal')">&times;</span>
+      <h2>Create New User</h2>
+      <form id="createUserForm" method="post" action="{% url 'create_user' %}">
+        {% csrf_token %}
+        {# Render fields from CustomUserCreationForm. as_p creates <p> for each field #}
+        {{ user_creation_form.username.label_tag }} {{ user_creation_form.username }} {{ user_creation_form.username.errors }}
+        {{ user_creation_form.password1.label_tag }} {{ user_creation_form.password1 }} {{ user_creation_form.password1.errors }}
+        {{ user_creation_form.password2.label_tag }} {{ user_creation_form.password2 }} {{ user_creation_form.password2.errors }}
+        {{ user_creation_form.first_name.label_tag }} {{ user_creation_form.first_name }} {{ user_creation_form.first_name.errors }}
+        {{ user_creation_form.last_name.label_tag }} {{ user_creation_form.last_name }} {{ user_creation_form.last_name.errors }}
+        <p>
+            <label for="id_groups">Group(s):</label>
+            <div class="checkbox-select-multiple">
+                {{ user_creation_form.groups }}
+            </div>
+            {{ user_creation_form.groups.errors }}
+        </p>
+
+        <button type="submit">Create User</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Choose User to Edit Modal -->
+  <div id="chooseEditUserModal" class="modal hidden">
+    <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+      <span class="close" onclick="closeModal('chooseEditUserModal')">&times;</span>
+      <h2>Select User to Edit</h2>
+      <div id="editUserListContainer" class="modal-list">
+        <ul>
+          <!-- Users will be loaded here dynamically -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Form Modal -->
+  <div id="editUserFormModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('editUserFormModal')">&times;</span>
+      <h2 id="editUserModalTitle">Edit User</h2>
+      <form id="editUserForm" method="post">
+        {% csrf_token %}
+        <div id="editUserFormFields">
+          <!-- User form fields loaded dynamically -->
+        </div>
+        <button type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Choose User to Delete Modal -->
+  <div id="chooseDeleteUserModal" class="modal hidden">
+    <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+      <span class="close" onclick="closeModal('chooseDeleteUserModal')">&times;</span>
+      <h2>Select User to Delete</h2>
+      <div id="deleteUserListContainer" class="modal-list">
+        <ul>
+          <!-- Users will be loaded here dynamically -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete User Confirmation Modal -->
+  <div id="deleteUserConfirmationModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('deleteUserConfirmationModal')">&times;</span>
+      <h2 id="deleteUserModalTitle">Confirm Delete User</h2>
+      <div id="deleteUserDetailsContainer" class="details-view">
+        <!-- User details will be loaded here (read-only) -->
+      </div>
+      <button id="confirmDeleteUserButton" class="delete-button" data-user-id="">Confirm Delete</button>
+    </div>
+  </div>
+
+
   <script>
-    function openModal(id) {
-      document.getElementById(id).classList.remove("hidden");
-    }
-    function closeModal(id) {
-      document.getElementById(id).classList.add("hidden");
-    }
-    function switchModal(closeId, openId) {
-      closeModal(closeId);
-      openModal(openId);
-    }
-
-    // Function to convert Django form field data (from JSON) into HTML
-    function createFormFieldHtml(fieldName, fieldValue, fieldType) {
-        let inputHtml = '';
-        if (fieldType === 'boolean') {
-            inputHtml = `<input type="checkbox" name="${fieldName}" ${fieldValue ? 'checked' : ''}>`;
-        } else if (fieldType === 'date') {
-            inputHtml = `<input type="date" name="${fieldName}" value="${fieldValue || ''}">`;
-        } else if (fieldType === 'number') {
-            inputHtml = `<input type="number" name="${fieldName}" value="${fieldValue || ''}">`;
-        } else if (fieldType === 'text' || fieldType === 'string') {
-            inputHtml = `<input type="text" name="${fieldName}" value="${fieldValue || ''}">`;
-        } else if (fieldType === 'textarea') {
-            inputHtml = `<textarea name="${fieldName}">${fieldValue || ''}</textarea>`;
+    // Helper to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
         }
-        // Add more field types as needed (e.g., select, radio)
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
 
-        // For simplicity, wrap in a paragraph similar to .as_p
-        return `<p><label for="id_${fieldName}">${fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}:</label>${inputHtml}</p>`;
+    // General Modal Functions
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+        document.getElementById(modalId).style.display = 'flex';
     }
 
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    function switchModal(closeModalId, openModalId) {
+        closeModal(closeModalId);
+        openModal(openModalId);
+    }
+
+    // Helper to create form fields for editing (used for both Audits and Users)
+    function createFormFieldHtml(fieldName, value, fieldType, options = []) {
+        const label = fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+        let inputHtml = '';
+        const id = `id_${fieldName}`;
+
+        if (fieldType === 'boolean') {
+            const isChecked = value === true || value === 'true';
+            inputHtml = `<input type="checkbox" id="${id}" name="${fieldName}" ${isChecked ? 'checked' : ''}>`;
+        } else if (fieldType === 'date') {
+            inputHtml = `<input type="date" id="${id}" name="${fieldName}" value="${value || ''}">`;
+        } else if (fieldType === 'textarea') {
+             inputHtml = `<textarea id="${id}" name="${fieldName}" rows="4">${value || ''}</textarea>`;
+        } else if (fieldType === 'number') {
+            inputHtml = `<input type="number" id="${id}" name="${fieldName}" value="${value || ''}">`;
+        } else if (fieldType === 'select') {
+            let optionHtml = options.map(option => `<option value="${option.value}" ${value === option.value ? 'selected' : ''}>${option.text}</option>`).join('');
+            inputHtml = `<select id="${id}" name="${fieldName}">${optionHtml}</select>`;
+        } else if (fieldType === 'multiselect-checkbox') {
+            let checkboxHtml = options.map(option => `
+                <label>
+                    <input type="checkbox" name="${fieldName}" value="${option.value}" ${value && value.includes(option.value) ? 'checked' : ''}>
+                    ${option.text}
+                </label>
+            `).join('<br>');
+            inputHtml = `<div class="checkbox-select-multiple">${checkboxHtml}</div>`;
+        } else if (fieldType === 'password') {
+            inputHtml = `<input type="password" id="${id}" name="${fieldName}" value="">`;
+        }
+        else {
+            inputHtml = `<input type="text" id="${id}" name="${fieldName}" value="${value || ''}">`;
+        }
+        return `
+            <p>
+                <label for="${id}">${label}:</label>
+                ${inputHtml}
+            </p>
+        `;
+    }
+
+    // Helper for displaying read-only details (used for both Audits and Users)
+    function createDisplayFieldHtml(fieldName, value) {
+        const label = fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+        let displayValue = value;
+        if (typeof value === 'boolean' || value === 'true' || value === 'false') {
+            displayValue = (value === true || value === 'true') ? 'Yes' : 'No';
+        } else if (value === null || value === undefined || value === '') {
+            displayValue = 'N/A';
+        } else if (Array.isArray(value)) {
+            displayValue = value.join(', '); // Join group names with comma
+        }
+
+        return `
+            <div>
+                <label>${label}:</label>
+                <span>${displayValue}</span>
+            </div>
+        `;
+    }
+
+
+    // --- Audit Functions (Existing) ---
+    document.querySelectorAll('form[action^="/audits/create_"]').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST', body: formData, headers: { 'X-CSRFToken': csrftoken },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') { alert(data.message); closeModal(form.closest('.modal').id); window.location.reload(); }
+                else { alert('Error: ' + JSON.stringify(data.errors || data.message)); }
+            })
+            .catch(error => { console.error('Error:', error); alert('An error occurred during submission.'); });
+        });
+    });
+
+    document.getElementById('editAuditForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        fetch(form.action, {
+            method: 'POST', body: formData, headers: { 'X-CSRFToken': csrftoken },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') { alert(data.message); closeModal('editAuditFormModal'); window.location.reload(); }
+            else { alert('Error: ' + JSON.stringify(data.errors || data.message)); }
+        })
+        .catch(error => { console.error('Error:', error); alert('An error occurred while saving changes.'); });
+    });
 
     function loadAuditData(auditId) {
-  fetch(`/audits/get-audit/${auditId}/`)
-    .then(response => {
-      if (!response.ok) {
-        console.error('Failed to fetch audit data:', response.status, response.statusText);
-        alert('Failed to load audit data. Please try again.');
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      // --- IMPORTANT DEBUG CONSOLE LOGS ---
-      console.log("\n--- FRONTEND: RECEIVED AUDIT DATA ---");
-      console.log("1. Raw JSON Data Received:", data);
-      console.log("2. Audit Type from Received Data:", data.audit_type);
-      console.log("3. Fields and Values being rendered:");
-      for (const [key, value] of Object.entries(data)) {
-        // Exclude 'id', 'csrfmiddlewaretoken', 'auditid' from logging if not rendering as separate fields
-        if (key === 'id' || key === 'csrfmiddlewaretoken' || key === 'auditid') {
-            if (key === 'id') continue;
-            if (key === 'csrfmiddlewaretoken') continue;
-        }
-        console.log(`   - Field: '${key}', Value: '${value}'`);
-      }
-      console.log("--- END FRONTEND: RECEIVED AUDIT DATA ---");
-      // --- END DEBUG CONSOLE LOGS ---
+        fetch(`/audits/get-audit/${auditId}/`)
+            .then(response => { if (!response.ok) { console.error('Failed to fetch audit data:', response.status, response.statusText); alert('Failed to load audit data for edit. Please try again.'); throw new Error(`HTTP error! status: ${response.status}`); } return response.json(); })
+            .then(data => {
+                console.log("\n--- FRONTEND: RECEIVED AUDIT DATA (EDIT) ---", data);
 
+                const form = document.getElementById('editAuditForm');
+                const formFieldsContainer = document.getElementById('editAuditFormFields');
+                const modalTitle = document.getElementById('editAuditModalTitle');
 
-      const form = document.getElementById('editAuditForm');
-      const formFieldsContainer = document.getElementById('editAuditFormFields');
-      const modalTitle = document.getElementById('editAuditModalTitle');
+                form.action = `/audits/edit-audit/${data.id}/`;
+                formFieldsContainer.innerHTML = '';
 
-      form.action = `/audits/edit-audit/${data.id}/`;
-      formFieldsContainer.innerHTML = ''; // Clear previous fields
+                modalTitle.textContent = `Edit ${data.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} Audit`;
 
-      if (data.audit_type) {
-        modalTitle.textContent = `Edit ${data.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} Audit`;
-      } else {
-        modalTitle.textContent = 'Edit Audit';
-      }
+                for (const [key, value] of Object.entries(data)) {
+                    if (key === 'id' || key === 'csrfmiddlewaretoken') { continue; }
+                    if (key === 'audit_type' || key === 'AuditID') {
+                        formFieldsContainer.innerHTML += `<div><label>${key.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}:</label><span>${value}</span></div>`;
+                        continue;
+                    }
 
-      for (const [key, value] of Object.entries(data)) {
-        if (key === 'id' || key === 'csrfmiddlewaretoken' || key === 'auditid') { // 'auditid' is often redundant if 'AuditID' is used from model
-            if (key === 'id') continue;
-            if (key === 'csrfmiddlewaretoken') continue;
-        }
+                    let fieldType = 'text';
+                    if (typeof value === 'boolean') { fieldType = 'boolean'; }
+                    else if (typeof value === 'number') { fieldType = 'number'; }
+                    else if (key.includes('date')) { fieldType = 'date'; }
+                    else if (key.includes('remarks') || key.includes('description') || key.includes('comment') || key.includes('action') || key.includes('for')) { fieldType = 'textarea'; }
+                    else if (key === 'location') {
+                        fieldType = 'select';
+                        const locationOptions = [
+                            { value: 'KBD Fisheries Lab', text: 'KBD Fisheries Lab' }, { value: 'KBD Algae Lab', text: 'KBD Algae Lab' },
+                            { value: 'KBD Aquaculture Lab', text: 'KBD Aquaculture Lab' }, { value: 'KBD Algae Facility Laboratory', text: 'KBD Algae Facility Laboratory' },
+                            { value: 'Duba Lab', text: 'Duba Lab' }, { value: 'Jizan Lab', text: 'Jizan Lab' },
+                            { value: 'Jubail Lab', text: 'Jubail Lab' }, { value: 'Al Raes Sea Cage Farms', text: 'Al Raes Sea Cage Farms' },
+                            { value: 'Algae Facility Phase 2', text: 'Algae Facility Phase 2' },
+                        ];
+                        formFieldsContainer.innerHTML += createFormFieldHtml(key, value, fieldType, locationOptions);
+                        continue;
+                    }
 
-        let fieldType = 'text'; // Default
-        if (typeof value === 'boolean') {
-            fieldType = 'boolean';
-        } else if (typeof value === 'number') {
-            fieldType = 'number';
-        } else if (key.includes('date')) { // Consider stricter date check if 'date' is part of other field names
-            fieldType = 'date';
-        } else if (key.includes('remarks') || key.includes('description') || key.includes('comment') || key.includes('action')) {
-            fieldType = 'textarea';
-        }
-        // Assuming createFormFieldHtml handles basic types correctly
-        formFieldsContainer.innerHTML += createFormFieldHtml(key, value, fieldType);
-      }
+                    formFieldsContainer.innerHTML += createFormFieldHtml(key, value, fieldType);
+                }
+                closeModal('chooseEditAuditModal'); openModal('editAuditFormModal');
+            })
+            .catch(error => { console.error('Error loading audit data for edit:', error); alert('Failed to load audit data for edit. Please try again.'); });
+    }
 
-      closeModal('editAuditModal');
-      openModal('editAuditFormModal');
-    })
-    .catch(error => {
-      console.error('Error loading audit data:', error);
-      alert('Failed to load audit data. Please try again.');
+    function openChooseEditAuditModal() {
+        fetch('/audits/get-all-audits/')
+            .then(response => response.json())
+            .then(audits => {
+                const editAuditListContainer = document.getElementById('editAuditListContainer').querySelector('ul');
+                editAuditListContainer.innerHTML = '';
+                if (audits.length === 0) { editAuditListContainer.innerHTML = '<li>No audits available to edit.</li>'; return; }
+                audits.forEach(audit => {
+                    const listItem = document.createElement('li'); listItem.setAttribute('ondblclick', `loadAuditData(${audit.id})`);
+                    listItem.innerHTML = `<span>${audit.AuditID || 'N/A'} &mdash; ${audit.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} on ${audit.date || 'N/A'}</span><button type="button" onclick="loadAuditData(${audit.id})">Select</button>`;
+                    editAuditListContainer.appendChild(listItem);
+                });
+                openModal('chooseEditAuditModal');
+            })
+            .catch(error => { console.error('Error fetching audits for edit list:', error); alert('Failed to load audit list for editing.'); });
+    }
+
+    function openChooseDeleteAuditModal() {
+        fetch('/audits/get-all-audits/')
+            .then(response => response.json())
+            .then(audits => {
+                const deleteAuditListContainer = document.getElementById('deleteAuditListContainer').querySelector('ul');
+                deleteAuditListContainer.innerHTML = '';
+                if (audits.length === 0) { deleteAuditListContainer.innerHTML = '<li>No audits available to delete.</li>'; return; }
+                audits.forEach(audit => {
+                    const listItem = document.createElement('li'); listItem.setAttribute('ondblclick', `loadAuditDataForDeleteConfirmation(${audit.id})`);
+                    listItem.innerHTML = `<span>${audit.AuditID || 'N/A'} &mdash; ${audit.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} on ${audit.date || 'N/A'}</span><button type="button" onclick="loadAuditDataForDeleteConfirmation(${audit.id})">Select</button>`;
+                    deleteAuditListContainer.appendChild(listItem);
+                });
+                openModal('chooseDeleteAuditModal');
+            })
+            .catch(error => { console.error('Error fetching audits for delete list:', error); alert('Failed to load audit list for deletion.'); });
+    }
+
+    function loadAuditDataForDeleteConfirmation(auditId) {
+        fetch(`/audits/get-audit/${auditId}/`)
+            .then(response => { if (!response.ok) { console.error('Failed to fetch audit data:', response.status, response.statusText); alert('Failed to load audit data for deletion. Please try again.'); throw new Error(`HTTP error! status: ${response.status}`); } return response.json(); })
+            .then(data => {
+                console.log("\n--- FRONTEND: RECEIVED AUDIT DATA (DELETE) ---", data);
+
+                const deleteAuditDetailsContainer = document.getElementById('deleteAuditDetailsContainer');
+                const modalTitle = document.getElementById('deleteAuditModalTitle');
+                const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+
+                deleteAuditDetailsContainer.innerHTML = '';
+                modalTitle.textContent = `Confirm Delete ${data.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} Audit`;
+
+                for (const [key, value] of Object.entries(data)) {
+                    if (key === 'id' || key === 'csrfmiddlewaretoken') { continue; }
+                    deleteAuditDetailsContainer.innerHTML += createDisplayFieldHtml(key, value);
+                }
+                confirmDeleteButton.dataset.auditId = data.id;
+                closeModal('chooseDeleteAuditModal'); openModal('deleteConfirmationModal');
+            })
+            .catch(error => { console.error('Error loading audit data for delete confirmation:', error); alert('Failed to load audit data for deletion confirmation. Please try again.'); });
+    }
+
+    document.getElementById('confirmDeleteButton').addEventListener('click', function() {
+        const auditIdToDelete = this.dataset.auditId;
+        if (!auditIdToDelete) { alert('No audit selected for deletion.'); return; }
+        if (!confirm('Are you absolutely sure you want to delete this audit? This action cannot be undone.')) { return; }
+
+        fetch(`/audits/delete-audit/${auditIdToDelete}/`, {
+            method: 'POST', headers: { 'X-CSRFToken': csrftoken },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') { alert(data.message); closeModal('deleteConfirmationModal'); window.location.reload(); }
+            else { alert('Error: ' + (data.message || 'An unknown error occurred during deletion.')); }
+        })
+        .catch(error => { console.error('Error during deletion:', error); alert('An error occurred while trying to delete the audit.'); });
     });
-}
+
+
+    // *************************************************************
+    // NEW JAVASCRIPT FUNCTIONS FOR USER MANAGEMENT
+    // *************************************************************
+
+    // Create User Form Submission
+    document.getElementById('createUserForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+
+        // Manually collect checkbox values for groups
+        const groupCheckboxes = form.querySelectorAll('input[name="groups"]:checked');
+        const selectedGroupIds = Array.from(groupCheckboxes).map(cb => cb.value);
+        formData.delete('groups'); // Remove existing 'groups' entries from formData
+        selectedGroupIds.forEach(id => formData.append('groups', id));
+
+        fetch(form.action, {
+            method: 'POST', body: formData, headers: { 'X-CSRFToken': csrftoken },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message); closeModal('createUserModal'); window.location.reload();
+            } else {
+                let errorMessages = 'Error: ';
+                if (data.errors) {
+                    for (const field in data.errors) {
+                        // Check if it's a non_field_errors or other global error
+                        if (field === '__all__') {
+                            errorMessages += `\nGeneral: ${data.errors[field].join('; ')}`;
+                        } else {
+                            errorMessages += `\n${field}: ${data.errors[field].join('; ')}`;
+                        }
+                    }
+                } else if (data.message) { errorMessages += data.message; }
+                alert(errorMessages);
+            }
+        })
+        .catch(error => { console.error('Error creating user:', error); alert('An error occurred during user creation.'); });
+    });
+
+    // Open Choose Edit User Modal
+    function openChooseEditUserModal() {
+        fetch('/audits/users/all/')
+            .then(response => response.json())
+            .then(users => {
+                const editUserListContainer = document.getElementById('editUserListContainer').querySelector('ul');
+                editUserListContainer.innerHTML = '';
+                if (users.length === 0) { editUserListContainer.innerHTML = '<li>No users available to edit.</li>'; return; }
+                users.forEach(user => {
+                    const listItem = document.createElement('li'); listItem.setAttribute('ondblclick', `loadUserDataForEdit(${user.id})`);
+                    const groupDisplay = user.groups && user.groups.length > 0 ? ` (${user.groups.join(', ')})` : '';
+                    listItem.innerHTML = `<span>${user.username}${groupDisplay}</span><button type="button" onclick="loadUserDataForEdit(${user.id})">Select</button>`;
+                    editUserListContainer.appendChild(listItem);
+                });
+                openModal('chooseEditUserModal');
+            })
+            .catch(error => { console.error('Error fetching users for edit list:', error); alert('Failed to load user list for editing.'); });
+    }
+
+    // Load User Data for Edit Form
+    async function loadUserDataForEdit(userId) {
+        try {
+            const userResponse = await fetch(`/audits/users/${userId}/`);
+            if (!userResponse.ok) { throw new Error(`HTTP error! status: ${userResponse.status}`); }
+            const userData = await userResponse.json();
+            console.log("\n--- FRONTEND: RECEIVED USER DATA (EDIT) ---", userData);
+
+            const groupsResponse = await fetch('/audits/users/all_groups/');
+            if (!groupsResponse.ok) { throw new Error(`HTTP error! status: ${groupsResponse.status}`); }
+            const allGroups = await groupsResponse.json();
+            const groupOptions = allGroups.map(group => ({ value: group.id.toString(), text: group.name }));
+
+            const form = document.getElementById('editUserForm');
+            const formFieldsContainer = document.getElementById('editUserFormFields');
+            const modalTitle = document.getElementById('editUserModalTitle');
+
+            form.action = `/audits/users/${userData.id}/edit/`;
+            formFieldsContainer.innerHTML = '';
+            modalTitle.textContent = `Edit User: ${userData.username}`;
+
+            const fieldsToRender = ['username', 'first_name', 'last_name', 'groups']; // Exclude password for edit form
+
+            for (const fieldName of fieldsToRender) {
+                if (fieldName === 'groups') {
+                    formFieldsContainer.innerHTML += createFormFieldHtml(fieldName, userData.selected_group_ids, 'multiselect-checkbox', groupOptions);
+                } else {
+                    formFieldsContainer.innerHTML += createFormFieldHtml(fieldName, userData[fieldName], 'text');
+                }
+            }
+            closeModal('chooseEditUserModal'); openModal('editUserFormModal');
+
+        } catch (error) { console.error('Error loading user data for edit:', error); alert('Failed to load user data for edit. Please try again.'); }
+    }
+
+    // Edit User Form Submission
+    document.getElementById('editUserForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+
+        // Manually collect checkbox values for groups
+        const groupCheckboxes = form.querySelectorAll('input[name="groups"]:checked');
+        const selectedGroupIds = Array.from(groupCheckboxes).map(cb => cb.value);
+        formData.delete('groups');
+        selectedGroupIds.forEach(id => formData.append('groups', id));
+
+        fetch(form.action, {
+            method: 'POST', body: formData, headers: { 'X-CSRFToken': csrftoken },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message); closeModal('editUserFormModal'); window.location.reload();
+            } else {
+                let errorMessages = 'Error: ';
+                if (data.errors) {
+                    for (const field in data.errors) {
+                        if (field === '__all__') {
+                            errorMessages += `\nGeneral: ${data.errors[field].join('; ')}`;
+                        } else {
+                            errorMessages += `\n${field}: ${data.errors[field].join('; ')}`;
+                        }
+                    }
+                } else if (data.message) { errorMessages += data.message; }
+                alert(errorMessages);
+            }
+        })
+        .catch(error => { console.error('Error editing user:', error); alert('An error occurred during user editing.'); });
+    });
+
+
+    // Open Choose Delete User Modal
+    function openChooseDeleteUserModal() {
+        fetch('/audits/users/all/')
+            .then(response => response.json())
+            .then(users => {
+                const deleteUserListContainer = document.getElementById('deleteUserListContainer').querySelector('ul');
+                deleteUserListContainer.innerHTML = '';
+                if (users.length === 0) { deleteUserListContainer.innerHTML = '<li>No users available to delete.</li>'; return; }
+                users.forEach(user => {
+                    const listItem = document.createElement('li'); listItem.setAttribute('ondblclick', `loadUserDataForDeleteConfirmation(${user.id})`);
+                    const groupDisplay = user.groups && user.groups.length > 0 ? ` (${user.groups.join(', ')})` : '';
+                    listItem.innerHTML = `<span>${user.username}${groupDisplay}</span><button type="button" onclick="loadUserDataForDeleteConfirmation(${user.id})">Select</button>`;
+                    deleteUserListContainer.appendChild(listItem);
+                });
+                openModal('chooseDeleteUserModal');
+            })
+            .catch(error => { console.error('Error fetching users for delete list:', error); alert('Failed to load user list for deletion.'); });
+    }
+
+    // Load User Data for Delete Confirmation Modal
+    async function loadUserDataForDeleteConfirmation(userId) {
+        try {
+            const response = await fetch(`/audits/users/${userId}/`);
+            if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+            const data = await response.json();
+            console.log("\n--- FRONTEND: RECEIVED USER DATA (DELETE) ---", data);
+
+            const deleteUserDetailsContainer = document.getElementById('deleteUserDetailsContainer');
+            const modalTitle = document.getElementById('deleteUserModalTitle');
+            const confirmDeleteUserButton = document.getElementById('confirmDeleteUserButton');
+
+            deleteUserDetailsContainer.innerHTML = '';
+            modalTitle.textContent = `Confirm Delete User: ${data.username}`;
+
+            const fieldsToDisplay = ['username', 'first_name', 'last_name', 'groups', 'is_active', 'date_joined'];
+            for (const fieldName of fieldsToDisplay) {
+                deleteUserDetailsContainer.innerHTML += createDisplayFieldHtml(fieldName, data[fieldName]);
+            }
+
+            confirmDeleteUserButton.dataset.userId = data.id;
+            closeModal('chooseDeleteUserModal'); openModal('deleteUserConfirmationModal');
+
+        } catch (error) { console.error('Error loading user data for delete confirmation:', error); alert('Failed to load user data for deletion confirmation. Please try again.'); }
+    }
+
+    // Handle the final Delete User button click
+    document.getElementById('confirmDeleteUserButton').addEventListener('click', function() {
+        const userIdToDelete = this.dataset.userId;
+        if (!userIdToDelete) { alert('No user selected for deletion.'); return; }
+        if (!confirm('Are you absolutely sure you want to delete this user? This action cannot be undone.')) { return; }
+
+        fetch(`/audits/users/${userIdToDelete}/delete/`, {
+            method: 'POST', headers: { 'X-CSRFToken': csrftoken },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message); closeModal('deleteUserConfirmationModal'); window.location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'An unknown error occurred during deletion.'));
+            }
+        })
+        .catch(error => { console.error('Error during user deletion:', error); alert('An error occurred while trying to delete the user.'); });
+    });
+
   </script>
 </body>
 </html>
