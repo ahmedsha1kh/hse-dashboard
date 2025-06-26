@@ -17,16 +17,17 @@ class MonthlyAuditForm(forms.ModelForm):
                   'freezers_functional_clean', 'secondary_containment_ok', 'evidence_of_spills_or_expired_stock', 
                   'chemicals_stored_labelled', 'safety_data_sheets_available', 'chemicals_in_inventory', 'chemical_containers_closed_and_disposed',
                   'spill_kit_accessible', 'bio_sample_temp_maintained', 'lab_consumables_stock_ok', 'storage_conditions_ok',
-                  'training_up_to_date']
+                  'training_up_to_date', 'score']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
+            'score': forms.NumberInput(attrs={'readonly': 'readonly'})
         }
 
         
 class BiannualAuditForm(forms.ModelForm):
     class Meta:
         model = Audit
-        fields = ['date', 'lab_coats_clean', 'biohazard_waste_reviewed']  # Replace as needed
+        fields = ['date', 'location', 'number_of_closeouts', 'number_of_nonconformances']  # Replace as needed
 
 class HazardousWasteForm(forms.ModelForm):
     class Meta:
@@ -69,6 +70,23 @@ class ChemicalAuditForm(forms.ModelForm):
             'date': forms.DateInput(attrs={'type': 'date'}),
             'disposed_date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+class AnnualEnvironmentalRefresherForm(forms.ModelForm):
+    class Meta:
+        model = Audit
+        fields = [
+            'number_of_employees',
+            'number_of_employees_trained',
+        ]
+
+class HSEInductionForm(forms.ModelForm):
+    class Meta:
+        model = Audit
+        fields = [
+            'number_of_employees',
+            'number_of_inductions',
+        ]
+
 
 # CRITICAL: CustomUserCreationForm
 class CustomUserCreationForm(UserCreationForm):

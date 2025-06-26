@@ -1,24 +1,27 @@
-from django.db import models
-from django.utils import timezone # Import timezone for current date
-import datetime
+# audits/models.py
 
-# Create your models here.
+from django.db import models
+from django.utils import timezone
+import datetime
+from django.contrib.auth.models import User
 
 class Audit(models.Model):
 
     ######################### GENERAL #########################
 
     AUDIT_TYPE_CHOICES = [
+        ('chemical_waste', 'Hazardous Waste Log'),
         ('monthly', 'Monthly Inspection'),
-        ('biannual', 'Biannual Inspection'),
+        ('biannual', 'Biannual Environment Audit'),
         ('hazardous', 'Hazardous Waste Inspection'),
-        ('chemical_waste', 'Chemical Waste Inventory')
+        ('annual_refresher', 'Annual Environmental Refresher'), # NEW
+        ('hse_induction', 'HSE Induction'),                       # NEW
     ]
 
     audit_type = models.CharField(
         max_length=20,
         choices=AUDIT_TYPE_CHOICES,
-        default='monthly' # Keep default='monthly' but ensure views override it for other types
+        default='monthly'
     )
 
     date = models.DateField(default=datetime.date.today)
@@ -36,16 +39,18 @@ class Audit(models.Model):
         ('Al Raes Sea Cage Farms', 'Al Raes Sea Cage Farms'),
         ('Algae Facility Phase 2', 'Algae Facility Phase 2'),
     ]
-    location = models.CharField(max_length=30, choices=LOCATION_CHOICES, blank=True, null=True)
 
-    # Consider adding a user field for who created/last modified the audit (good practice)
-    # user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    # created_at = models.DateTimeField(auto_now_add=True)
-    # updated_at = models.DateTimeField(auto_now=True)
+    location = models.CharField(max_length=100, choices=LOCATION_CHOICES, blank=True, null=True)
+
+    score = models.FloatField(
+        null=True,
+        blank=True,
+        verbose_name="Inspection Score (%)",
+        help_text="Automatically calculated percentage score for Monthly Inspections."
+    )
 
     ######################### MONTHLY INSPECTIONS ###############################
 
-    # Safety and Equipment - ADDED null=True, blank=True
     fire_extinguishers_checked = models.BooleanField(default=False, null=True, blank=True)
     emergency_exits_inspected = models.BooleanField(default=False, null=True, blank=True)
     first_aid_kits_checked = models.BooleanField(default=False, null=True, blank=True)
@@ -53,17 +58,15 @@ class Audit(models.Model):
     ppe_stocked = models.BooleanField(default=False, null=True, blank=True)
     lab_coats_clean = models.BooleanField(default=False, null=True, blank=True)
 
-    # Waste Disposal - ADDED null=True, blank=True
     biohazard_waste_reviewed = models.BooleanField(default=False, null=True, blank=True)
     chemical_waste_reviewed = models.BooleanField(default=False, null=True, blank=True)
     glass_sharp_waste_reviewed = models.BooleanField(default=False, null=True, blank=True)
 
-    # Cleanliness and Surfaces - ADDED null=True, blank=True
     lab_surfaces_clean = models.BooleanField(default=False, null=True, blank=True)
     balances_calibrated_cleaned = models.BooleanField(default=False, null=True, blank=True)
     microscopes_calibrated_cleaned = models.BooleanField(default=False, null=True, blank=True)
     freezers_functional_clean = models.BooleanField(default=False, null=True, blank=True)
-    # Chemical Management - ADDED null=True, blank=True
+
     secondary_containment_ok = models.BooleanField(default=False, null=True, blank=True)
     evidence_of_spills_or_expired_stock = models.BooleanField(default=False, null=True, blank=True)
     chemicals_stored_labelled = models.BooleanField(default=False, null=True, blank=True)
@@ -72,18 +75,14 @@ class Audit(models.Model):
     chemical_containers_closed_and_disposed = models.BooleanField(default=False, null=True, blank=True)
     spill_kit_accessible = models.BooleanField(default=False, null=True, blank=True)
 
-    # Biological Storage & Training - ADDED null=True, blank=True
     bio_sample_temp_maintained = models.BooleanField(default=False, null=True, blank=True)
     lab_consumables_stock_ok = models.BooleanField(default=False, null=True, blank=True)
     storage_conditions_ok = models.BooleanField(default=False, null=True, blank=True)
-
-    # Training (aggregate check for now) - ADDED null=True, blank=True
     training_up_to_date = models.BooleanField(default=False, null=True, blank=True)
 
 
     ######################### CHEMICAL WASTE ###############################
 
-    # ADDED null=True, blank=True to all Char/Float/Boolean fields
     chemical_name = models.CharField(max_length=100, null=True, blank=True)
     quantity_liters = models.FloatField(default=0.0, help_text="Total quantity in liters", null=True, blank=True)
     container_size = models.CharField(max_length=50, help_text="E.g., 500ml, 1L, etc.", null=True, blank=True)
@@ -92,29 +91,38 @@ class Audit(models.Model):
     used_for = models.CharField(max_length=100, help_text="Purpose for which the chemical was used", null=True, blank=True)
     hazard_classification = models.CharField(max_length=100, null=True, blank=True)
     disposed = models.BooleanField(default=False, null=True, blank=True)
-    disposed_date = models.DateField(null=True, blank=True) # Already had null=True, blank=True
+    disposed_date = models.DateField(null=True, blank=True)
     disposed_by = models.CharField(max_length=100, null=True, blank=True)
 
     ######################### HAZARDOUS WASTE INSPECTION ###############################
 
-    # ADDED null=True, blank=True to all Boolean fields
     hazardous_waste_generated = models.BooleanField(default=False, verbose_name="Has hazardous waste been generated this week?", null=True, blank=True)
     containers_labeled = models.BooleanField(default=False, verbose_name="Are containers labeled?", null=True, blank=True)
     containers_segregated = models.BooleanField(default=False, verbose_name="Are containers segregated?", null=True, blank=True)
     containers_free_from_leaks = models.BooleanField(default=False, verbose_name="Are containers free from leaks?", null=True, blank=True)
     secondary_containment_in_place = models.BooleanField(default=False, verbose_name="Is secondary containment in place?", null=True, blank=True)
     storage_limit_exceeded = models.BooleanField(default=False, verbose_name="Has the storage limit been exceeded?", null=True, blank=True)
-    remarks_or_corrective_action = models.TextField(blank=True, null=True, verbose_name="Remarks/Corrective Action Taken") # Added null=True
+    remarks_or_corrective_action = models.TextField(blank=True, null=True, verbose_name="Remarks/Corrective Action Taken")
 
+    ######################### BIANNUAL AUDIT EXISTING FIELDS ###############################
+    number_of_closeouts = models.IntegerField(default=0, null=True, blank=True)
+    number_of_nonconformances = models.IntegerField(default=0, null=True, blank=True)
+
+    ######################### ANNUAL ENVIRONMENTAL REFRESHER ###############################
+    number_of_employees = models.IntegerField(default=220, null=True, blank=True)
+    number_of_employees_trained = models.IntegerField(default=0, null=True, blank=True)
+
+    ######################### HSE INDUCTIONS ###############################
+    number_of_inductions = models.IntegerField(default=0, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.AuditID:
             last = Audit.objects.order_by('-id').first()
-            # Ensure next_number logic handles cases where last is None correctly for initial ID
             next_number = 0 if not last or not last.AuditID.isdigit() else int(last.AuditID)
-            self.AuditID = str(next_number + 1).zfill(5)  # pad with zeros
+            self.AuditID = str(next_number + 1).zfill(5)
         super().save(*args, **kwargs)
 
 
     def __str__(self):
-        return f"Audit number {self.AuditID} on {self.date}"
+        return f"Audit {self.AuditID} ({self.get_audit_type_display()}) on {self.date}"
+

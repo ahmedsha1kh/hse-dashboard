@@ -5,7 +5,7 @@
   <title>HSE Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* Your existing CSS (as updated in the last turn for modal fitting) */
+    /* Your existing CSS */
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background-color: #f3f4f6; color: #333; height: 100vh; overflow: hidden; }
     .container { display: flex; height: 100vh; }
@@ -30,9 +30,14 @@
     .chart-box {
       background-color: #ffffff; padding: 20px; height: 200px;
       border-radius: 10px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
 
-    /* UPDATED/NEW MODAL CSS FOR BETTER FIT (as per last turn) */
+    /* UPDATED/NEW MODAL CSS FOR BETTER FIT */
     .modal {
       display: none; justify-content: center; align-items: center;
       position: fixed; z-index: 1000; left: 0; top: 0;
@@ -100,7 +105,7 @@
     }
 
     /* Delete Button Specific Style */
-    #confirmDeleteButton, #confirmDeleteUserButton { /* Apply to both audit and user delete buttons */
+    #confirmDeleteButton, #confirmDeleteUserButton {
       background-color: #dc3545; margin-top: 20px; width: 100%;
       padding: 10px; font-size: 16px; border: none; border-radius: 5px;
       color: white; cursor: pointer; transition: background-color 0.2s;
@@ -121,6 +126,36 @@
     .modal-content form ul.errorlist {
         color: red; list-style-type: none; padding: 0; margin-top: 5px; font-size: 0.9em;
     }
+
+    /* Styles for audit type buttons */
+    .audit-type-button {
+      width: 100%;
+      padding: 12px 20px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #4CAF50, #2E8B57);
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .audit-type-button:hover {
+      background: linear-gradient(135deg, #2E8B57, #4CAF50);
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .audit-type-button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
   </style>
 </head>
 <body>
@@ -139,30 +174,37 @@
     <div class="main">
       <div class="title">HSE Dashboard</div>
       <div class="chart-grid">
-        <div class="chart-box">Chart Placeholder 1</div>
-        <div class="chart-box">Chart Placeholder 2</div>
-        <div class="chart-box">Chart Placeholder 3</div>
-        <div class="chart-box">Chart Placeholder 4</div>
+        <!-- FIRST CHART: Monthly Inspection Scores by Department -->
+        <div class="chart-box" style="grid-column: span 2;">
+          <canvas id="monthlyInspectionScoresChart"></canvas>
+        </div>
+        <!-- Biannual NCRs by Lab Chart -->
+        <div class="chart-box" style="grid-column: span 2;">
+          <h3>Biannual Audits: Total vs. Open NCRs by Lab</h3>
+          <canvas id="biannualNCRChart"></canvas>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- All your existing audit modals -->
+  <!-- Audit Modals -->
   <div id="chooseAuditTypeModal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal('chooseAuditTypeModal')">&times;</span>
       <h2>Select Audit Type</h2>
-      <button onclick="switchModal('chooseAuditTypeModal', 'chemicalAuditModal')">Chemical Audit</button><br><br>
-      <button onclick="switchModal('chooseAuditTypeModal', 'monthlyAuditModal')">Monthly Audit</button><br><br>
-      <button onclick="switchModal('chooseAuditTypeModal', 'biannualAuditModal')">Biannual Audit</button><br><br>
-      <button onclick="switchModal('chooseAuditTypeModal', 'hazardousAuditModal')">Hazardous Waste Audit</button>
+      <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'chemicalAuditModal')">Hazardous Waste Log</button><br><br>
+      <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'monthlyAuditModal')">Monthly Inspection</button><br><br>
+      <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'biannualAuditModal')">Biannual Environment Audit</button><br><br>
+      <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'hazardousAuditModal')">Hazardous Waste Inspection</button><br><br>
+      <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'annualRefresherModal')">Annual Environmental Refresher</button><br><br> {# NEW BUTTON #}
+      <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'hseInductionModal')">HSE Induction</button> {# NEW BUTTON #}
     </div>
   </div>
 
   <div id="chemicalAuditModal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal('chemicalAuditModal')">&times;</span>
-      <h2>Chemical Audit</h2>
+      <h2>Hazardous Waste Log</h2>
       <form method="post" action="{% url 'create_chemical_audit' %}">
         {% csrf_token %}
         {{ chemical_form.as_p }}
@@ -174,7 +216,7 @@
   <div id="monthlyAuditModal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal('monthlyAuditModal')">&times;</span>
-      <h2>Monthly Audit</h2>
+      <h2>Monthly Inspection</h2>
       <form method="post" action="{% url 'create_monthly_audit' %}">
         {% csrf_token %}
         {{ monthly_form.as_p }}
@@ -186,7 +228,7 @@
   <div id="biannualAuditModal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal('biannualAuditModal')">&times;</span>
-      <h2>Biannual Audit</h2>
+      <h2>Biannual Environment Audit</h2>
       <form method="post" action="{% url 'create_biannual_audit' %}">
         {% csrf_token %}
         {{ biannual_form.as_p }}
@@ -198,10 +240,36 @@
   <div id="hazardousAuditModal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal('hazardousAuditModal')">&times;</span>
-      <h2>Hazardous Waste Audit</h2>
+      <h2>Hazardous Waste Inspection</h2>
       <form method="post" action="{% url 'create_hazardous_audit' %}">
         {% csrf_token %}
         {{ hazardous_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  {# NEW: Annual Environmental Refresher Modal #}
+  <div id="annualRefresherModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('annualRefresherModal')">&times;</span>
+      <h2>Annual Environmental Refresher</h2>
+      <form method="post" action="{% url 'create_annual_refresher_audit' %}">
+        {% csrf_token %}
+        {{ annual_refresher_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  {# NEW: HSE Induction Modal #}
+  <div id="hseInductionModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('hseInductionModal')">&times;</span>
+      <h2>HSE Induction</h2>
+      <form method="post" action="{% url 'create_hse_induction_audit' %}">
+        {% csrf_token %}
+        {{ hse_induction_form.as_p }}
         <button type="submit">Submit</button>
       </form>
     </div>
@@ -215,7 +283,7 @@
         <ul>
             {% for audit in audits %}
               <li ondblclick="loadAuditData({{ audit.id }})">
-                <span>{{ audit.AuditID }} &mdash; {{ audit.audit_type }} &mdash; {{ audit.date }}</span>
+                <span>{{ audit.AuditID }} &mdash; {{ audit.get_audit_type_display }} &mdash; {{ audit.date }}</span>
                 <button type="button" onclick="loadAuditData({{ audit.id }})">Select</button>
               </li>
             {% empty %}
@@ -246,13 +314,13 @@
           <ul>
               {% for audit in audits %}
                 <li ondblclick="loadAuditDataForDeleteConfirmation({{ audit.id }})">
-                  <span>{{ audit.AuditID }} &mdash; {{ audit.audit_type }} &mdash; {{ audit.date }}</span>
+                  <span>{{ audit.AuditID }} &mdash; {{ audit.get_audit_type_display }} &mdash; {{ audit.date }}</span>
                   <button type="button" onclick="loadAuditDataForDeleteConfirmation({{ audit.id }})">Select</button>
                 </li>
               {% empty %}
                 <li>No audits available.</li>
               {% endfor %}
-          </ul>
+        </ul>
       </div>
     </div>
   </div>
@@ -270,22 +338,40 @@
 
 
   <!-- ************************************************************* -->
-  <!-- NEW: USER MANAGEMENT MODALS -->
+  <!-- USER MANAGEMENT MODALS -->
   <!-- ************************************************************* -->
 
-  <!-- Create User Modal -->
   <div id="createUserModal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal('createUserModal')">&times;</span>
       <h2>Create New User</h2>
       <form id="createUserForm" method="post" action="{% url 'create_user' %}">
         {% csrf_token %}
-        {# Render fields from CustomUserCreationForm. as_p creates <p> for each field #}
-        {{ user_creation_form.username.label_tag }} {{ user_creation_form.username }} {{ user_creation_form.username.errors }}
-        {{ user_creation_form.password1.label_tag }} {{ user_creation_form.password1 }} {{ user_creation_form.password1.errors }}
-        {{ user_creation_form.password2.label_tag }} {{ user_creation_form.password2 }} {{ user_creation_form.password2.errors }}
-        {{ user_creation_form.first_name.label_tag }} {{ user_creation_form.first_name }} {{ user_creation_form.first_name.errors }}
-        {{ user_creation_form.last_name.label_tag }} {{ user_creation_form.last_name }} {{ user_creation_form.last_name.errors }}
+        <p>
+            {{ user_creation_form.username.label_tag }}
+            {{ user_creation_form.username }}
+            {{ user_creation_form.username.errors }}
+        </p>
+        <p>
+            {{ user_creation_form.password1.label_tag }}
+            {{ user_creation_form.password1 }}
+            {{ user_creation_form.password1.errors }}
+        </p>
+        <p>
+            {{ user_creation_form.password2.label_tag }}
+            {{ user_creation_form.password2 }}
+            {{ user_creation_form.password2.errors }}
+        </p>
+        <p>
+            {{ user_creation_form.first_name.label_tag }}
+            {{ user_creation_form.first_name }}
+            {{ user_creation_form.first_name.errors }}
+        </p>
+        <p>
+            {{ user_creation_form.last_name.label_tag }}
+            {{ user_creation_form.last_name }}
+            {{ user_creation_form.last_name.errors }}
+        </p>
         <p>
             <label for="id_groups">Group(s):</label>
             <div class="checkbox-select-multiple">
@@ -299,7 +385,6 @@
     </div>
   </div>
 
-  <!-- Choose User to Edit Modal -->
   <div id="chooseEditUserModal" class="modal hidden">
     <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
       <span class="close" onclick="closeModal('chooseEditUserModal')">&times;</span>
@@ -312,7 +397,6 @@
     </div>
   </div>
 
-  <!-- Edit User Form Modal -->
   <div id="editUserFormModal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal('editUserFormModal')">&times;</span>
@@ -327,7 +411,6 @@
     </div>
   </div>
 
-  <!-- Choose User to Delete Modal -->
   <div id="chooseDeleteUserModal" class="modal hidden">
     <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
       <span class="close" onclick="closeModal('chooseDeleteUserModal')">&times;</span>
@@ -340,7 +423,6 @@
     </div>
   </div>
 
-  <!-- Delete User Confirmation Modal -->
   <div id="deleteUserConfirmationModal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal('deleteUserConfirmationModal')">&times;</span>
@@ -353,6 +435,8 @@
   </div>
 
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script>
     // Helper to get CSRF token
     function getCookie(name) {
@@ -415,6 +499,8 @@
             inputHtml = `<div class="checkbox-select-multiple">${checkboxHtml}</div>`;
         } else if (fieldType === 'password') {
             inputHtml = `<input type="password" id="${id}" name="${fieldName}" value="">`;
+        } else if (fieldName === 'score') {
+            inputHtml = `<input type="text" id="${id}" name="${fieldName}" value="${value !== null ? value + '%' : 'N/A'}" readonly>`;
         }
         else {
             inputHtml = `<input type="text" id="${id}" name="${fieldName}" value="${value || ''}">`;
@@ -436,7 +522,13 @@
         } else if (value === null || value === undefined || value === '') {
             displayValue = 'N/A';
         } else if (Array.isArray(value)) {
-            displayValue = value.join(', '); // Join group names with comma
+            displayValue = value.join(', ');
+        } else if (fieldName === 'score' && value !== null) {
+            displayValue = value + '%';
+        }
+        // Handle numerical fields for Biannual, Annual Refresher, HSE Induction
+        else if (['number_of_nonconformances', 'number_of_closeouts', 'number_of_employees', 'number_of_employees_trained', 'number_of_inductions'].includes(fieldName) && value !== null) {
+            displayValue = value;
         }
 
         return `
@@ -448,7 +540,7 @@
     }
 
 
-    // --- Audit Functions (Existing) ---
+    // --- Audit Functions ---
     document.querySelectorAll('form[action^="/audits/create_"]').forEach(form => {
         form.addEventListener('submit', function(event) {
             event.preventDefault();
@@ -476,6 +568,8 @@
         .then(data => {
             if (data.status === 'success') { alert(data.message); closeModal('editAuditFormModal'); window.location.reload(); }
             else { alert('Error: ' + JSON.stringify(data.errors || data.message)); }
+            renderMonthlyInspectionScoresChart();
+            renderBiannualNCRChart();
         })
         .catch(error => { console.error('Error:', error); alert('An error occurred while saving changes.'); });
     });
@@ -493,18 +587,21 @@
                 form.action = `/audits/edit-audit/${data.id}/`;
                 formFieldsContainer.innerHTML = '';
 
-                modalTitle.textContent = `Edit ${data.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} Audit`;
+                modalTitle.textContent = `Edit ${data.display_audit_type} Audit`;
 
                 for (const [key, value] of Object.entries(data)) {
-                    if (key === 'id' || key === 'csrfmiddlewaretoken') { continue; }
+                    if (key === 'id' || key === 'csrfmiddlewaretoken' || key === 'display_audit_type') { continue; }
                     if (key === 'audit_type' || key === 'AuditID') {
                         formFieldsContainer.innerHTML += `<div><label>${key.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}:</label><span>${value}</span></div>`;
                         continue;
                     }
 
                     let fieldType = 'text';
+                    // Check for number fields relevant to all new/updated audit types
                     if (typeof value === 'boolean') { fieldType = 'boolean'; }
-                    else if (typeof value === 'number') { fieldType = 'number'; }
+                    else if (['score', 'number_of_nonconformances', 'number_of_closeouts', 'number_of_employees', 'number_of_employees_trained', 'number_of_inductions'].includes(key)) { 
+                        fieldType = 'number'; 
+                    }
                     else if (key.includes('date')) { fieldType = 'date'; }
                     else if (key.includes('remarks') || key.includes('description') || key.includes('comment') || key.includes('action') || key.includes('for')) { fieldType = 'textarea'; }
                     else if (key === 'location') {
@@ -536,7 +633,19 @@
                 if (audits.length === 0) { editAuditListContainer.innerHTML = '<li>No audits available to edit.</li>'; return; }
                 audits.forEach(audit => {
                     const listItem = document.createElement('li'); listItem.setAttribute('ondblclick', `loadAuditData(${audit.id})`);
-                    listItem.innerHTML = `<span>${audit.AuditID || 'N/A'} &mdash; ${audit.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} on ${audit.date || 'N/A'}</span><button type="button" onclick="loadAuditData(${audit.id})">Select</button>`;
+                    let displayInfo = '';
+                    if (audit.audit_type === 'monthly' && audit.score !== null) {
+                        displayInfo = ` — Score: ${audit.score}%`;
+                    } else if (audit.audit_type === 'biannual' && audit.number_of_nonconformances !== null && audit.number_of_closeouts !== null) {
+                        const openNCRs = audit.number_of_nonconformances - audit.number_of_closeouts;
+                        displayInfo = ` — NCRs: ${audit.number_of_nonconformances} (Open: ${openNCRs})`;
+                    } else if (audit.audit_type === 'annual_refresher' && audit.number_of_employees !== null && audit.number_of_employees_trained !== null) {
+                        displayInfo = ` — Total Employees: ${audit.number_of_employees}, Trained: ${audit.number_of_employees_trained}`;
+                    } else if (audit.audit_type === 'hse_induction' && audit.number_of_inductions !== null) {
+                        displayInfo = ` — Inductions: ${audit.number_of_inductions}`;
+                    }
+
+                    listItem.innerHTML = `<span>${audit.AuditID || 'N/A'} &mdash; ${audit.display_audit_type || 'N/A'} on ${audit.date || 'N/A'}${displayInfo}</span><button type="button" onclick="loadAuditData(${audit.id})">Select</button>`;
                     editAuditListContainer.appendChild(listItem);
                 });
                 openModal('chooseEditAuditModal');
@@ -553,7 +662,19 @@
                 if (audits.length === 0) { deleteAuditListContainer.innerHTML = '<li>No audits available to delete.</li>'; return; }
                 audits.forEach(audit => {
                     const listItem = document.createElement('li'); listItem.setAttribute('ondblclick', `loadAuditDataForDeleteConfirmation(${audit.id})`);
-                    listItem.innerHTML = `<span>${audit.AuditID || 'N/A'} &mdash; ${audit.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} on ${audit.date || 'N/A'}</span><button type="button" onclick="loadAuditDataForDeleteConfirmation(${audit.id})">Select</button>`;
+                    let displayInfo = '';
+                    if (audit.audit_type === 'monthly' && audit.score !== null) {
+                        displayInfo = ` — Score: ${audit.score}%`;
+                    } else if (audit.audit_type === 'biannual' && audit.number_of_nonconformances !== null && audit.number_of_closeouts !== null) {
+                        const openNCRs = audit.number_of_nonconformances - audit.number_of_closeouts;
+                        displayInfo = ` — NCRs: ${audit.number_of_nonconformances} (Open: ${openNCRs})`;
+                    } else if (audit.audit_type === 'annual_refresher' && audit.number_of_employees !== null && audit.number_of_employees_trained !== null) {
+                        displayInfo = ` — Total Employees: ${audit.number_of_employees}, Trained: ${audit.number_of_employees_trained}`;
+                    } else if (audit.audit_type === 'hse_induction' && audit.number_of_inductions !== null) {
+                        displayInfo = ` — Inductions: ${audit.number_of_inductions}`;
+                    }
+
+                    listItem.innerHTML = `<span>${audit.AuditID || 'N/A'} &mdash; ${audit.display_audit_type || 'N/A'} on ${audit.date || 'N/A'}${displayInfo}</span><button type="button" onclick="loadAuditDataForDeleteConfirmation(${audit.id})">Select</button>`;
                     deleteAuditListContainer.appendChild(listItem);
                 });
                 openModal('chooseDeleteAuditModal');
@@ -572,10 +693,10 @@
                 const confirmDeleteButton = document.getElementById('confirmDeleteButton');
 
                 deleteAuditDetailsContainer.innerHTML = '';
-                modalTitle.textContent = `Confirm Delete ${data.audit_type.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())} Audit`;
+                modalTitle.textContent = `Confirm Delete ${data.display_audit_type} Audit`;
 
                 for (const [key, value] of Object.entries(data)) {
-                    if (key === 'id' || key === 'csrfmiddlewaretoken') { continue; }
+                    if (key === 'id' || key === 'csrfmiddlewaretoken' || key === 'audit_type' || key === 'display_audit_type') { continue; }
                     deleteAuditDetailsContainer.innerHTML += createDisplayFieldHtml(key, value);
                 }
                 confirmDeleteButton.dataset.auditId = data.id;
@@ -594,27 +715,27 @@
         })
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'success') { alert(data.message); closeModal('deleteConfirmationModal'); window.location.reload(); }
-            else { alert('Error: ' + (data.message || 'An unknown error occurred during deletion.')); }
+            if (data.status === 'success') {
+                alert(data.message); closeModal('deleteConfirmationModal'); window.location.reload();
+                renderMonthlyInspectionScoresChart();
+                renderBiannualNCRChart();
+            } else {
+                alert('Error: ' + (data.message || 'An unknown error occurred during deletion.'));
+            }
         })
         .catch(error => { console.error('Error during deletion:', error); alert('An error occurred while trying to delete the audit.'); });
     });
 
 
-    // *************************************************************
-    // NEW JAVASCRIPT FUNCTIONS FOR USER MANAGEMENT
-    // *************************************************************
-
-    // Create User Form Submission
+    // --- User Management Functions (Existing) ---
     document.getElementById('createUserForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
 
-        // Manually collect checkbox values for groups
         const groupCheckboxes = form.querySelectorAll('input[name="groups"]:checked');
         const selectedGroupIds = Array.from(groupCheckboxes).map(cb => cb.value);
-        formData.delete('groups'); // Remove existing 'groups' entries from formData
+        formData.delete('groups');
         selectedGroupIds.forEach(id => formData.append('groups', id));
 
         fetch(form.action, {
@@ -628,7 +749,6 @@
                 let errorMessages = 'Error: ';
                 if (data.errors) {
                     for (const field in data.errors) {
-                        // Check if it's a non_field_errors or other global error
                         if (field === '__all__') {
                             errorMessages += `\nGeneral: ${data.errors[field].join('; ')}`;
                         } else {
@@ -642,26 +762,24 @@
         .catch(error => { console.error('Error creating user:', error); alert('An error occurred during user creation.'); });
     });
 
-    // Open Choose Edit User Modal
     function openChooseEditUserModal() {
         fetch('/audits/users/all/')
             .then(response => response.json())
             .then(users => {
-                const editUserListContainer = document.getElementById('editUserListContainer').querySelector('ul');
-                editUserListContainer.innerHTML = '';
-                if (users.length === 0) { editUserListContainer.innerHTML = '<li>No users available to edit.</li>'; return; }
+                const deleteUserListContainer = document.getElementById('editUserListContainer').querySelector('ul');
+                deleteUserListContainer.innerHTML = '';
+                if (users.length === 0) { return; }
                 users.forEach(user => {
                     const listItem = document.createElement('li'); listItem.setAttribute('ondblclick', `loadUserDataForEdit(${user.id})`);
                     const groupDisplay = user.groups && user.groups.length > 0 ? ` (${user.groups.join(', ')})` : '';
                     listItem.innerHTML = `<span>${user.username}${groupDisplay}</span><button type="button" onclick="loadUserDataForEdit(${user.id})">Select</button>`;
-                    editUserListContainer.appendChild(listItem);
+                    deleteUserListContainer.appendChild(listItem);
                 });
                 openModal('chooseEditUserModal');
             })
             .catch(error => { console.error('Error fetching users for edit list:', error); alert('Failed to load user list for editing.'); });
     }
 
-    // Load User Data for Edit Form
     async function loadUserDataForEdit(userId) {
         try {
             const userResponse = await fetch(`/audits/users/${userId}/`);
@@ -682,7 +800,7 @@
             formFieldsContainer.innerHTML = '';
             modalTitle.textContent = `Edit User: ${userData.username}`;
 
-            const fieldsToRender = ['username', 'first_name', 'last_name', 'groups']; // Exclude password for edit form
+            const fieldsToRender = ['username', 'first_name', 'last_name', 'groups'];
 
             for (const fieldName of fieldsToRender) {
                 if (fieldName === 'groups') {
@@ -696,13 +814,11 @@
         } catch (error) { console.error('Error loading user data for edit:', error); alert('Failed to load user data for edit. Please try again.'); }
     }
 
-    // Edit User Form Submission
     document.getElementById('editUserForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
 
-        // Manually collect checkbox values for groups
         const groupCheckboxes = form.querySelectorAll('input[name="groups"]:checked');
         const selectedGroupIds = Array.from(groupCheckboxes).map(cb => cb.value);
         formData.delete('groups');
@@ -733,14 +849,13 @@
     });
 
 
-    // Open Choose Delete User Modal
     function openChooseDeleteUserModal() {
         fetch('/audits/users/all/')
             .then(response => response.json())
             .then(users => {
                 const deleteUserListContainer = document.getElementById('deleteUserListContainer').querySelector('ul');
                 deleteUserListContainer.innerHTML = '';
-                if (users.length === 0) { deleteUserListContainer.innerHTML = '<li>No users available to delete.</li>'; return; }
+                if (users.length === 0) { return; }
                 users.forEach(user => {
                     const listItem = document.createElement('li'); listItem.setAttribute('ondblclick', `loadUserDataForDeleteConfirmation(${user.id})`);
                     const groupDisplay = user.groups && user.groups.length > 0 ? ` (${user.groups.join(', ')})` : '';
@@ -752,7 +867,6 @@
             .catch(error => { console.error('Error fetching users for delete list:', error); alert('Failed to load user list for deletion.'); });
     }
 
-    // Load User Data for Delete Confirmation Modal
     async function loadUserDataForDeleteConfirmation(userId) {
         try {
             const response = await fetch(`/audits/users/${userId}/`);
@@ -778,7 +892,6 @@
         } catch (error) { console.error('Error loading user data for delete confirmation:', error); alert('Failed to load user data for deletion confirmation. Please try again.'); }
     }
 
-    // Handle the final Delete User button click
     document.getElementById('confirmDeleteUserButton').addEventListener('click', function() {
         const userIdToDelete = this.dataset.userId;
         if (!userIdToDelete) { alert('No user selected for deletion.'); return; }
@@ -798,6 +911,285 @@
         .catch(error => { console.error('Error during user deletion:', error); alert('An error occurred while trying to delete the user.'); });
     });
 
+    // Charting Logic
+    console.log("DOMContentLoaded listener being added.");
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOMContentLoaded fired.");
+
+        if (typeof ChartjsAnnotation !== 'undefined') {
+            console.log("ChartjsAnnotation found, registering plugin.");
+            Chart.register(ChartjsAnnotation);
+        } else {
+            console.warn("ChartjsAnnotation plugin not found. Target line might not render.");
+        }
+        
+        console.log("Calling renderMonthlyInspectionScoresChart().");
+        renderMonthlyInspectionScoresChart();
+        console.log("renderMonthlyInspectionScoresChart() called.");
+
+        console.log("Calling renderBiannualNCRChart().");
+        renderBiannualNCRChart();
+        console.log("renderBiannualNCRChart() called.");
+    });
+
+    let monthlyInspectionChartInstance = null;
+    let biannualNCRChartInstance = null;
+
+    async function renderMonthlyInspectionScoresChart() {
+        console.log("Inside renderMonthlyInspectionScoresChart function.");
+        try {
+            console.log("Fetching chart data from /audits/charts/monthly_inspection_scores/.");
+            const response = await fetch('/audits/charts/monthly_inspection_scores/');
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("HTTP Error response text for monthly scores:", errorText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const chartData = await response.json();
+            console.log("Monthly Scores Chart data received:", chartData);
+
+            const ctx = document.getElementById('monthlyInspectionScoresChart');
+            if (!ctx) {
+                console.error("Canvas element 'monthlyInspectionScoresChart' not found. Chart cannot be rendered.");
+                const chartBox = document.getElementById('monthlyInspectionScoresChart')?.closest('.chart-box');
+                if (chartBox) {
+                    chartBox.innerHTML = '<p style="color: red; text-align: center;">Failed to load Monthly Inspection Scores chart data. Canvas element missing.</p>';
+                }
+                return;
+            }
+            const chartCtx = ctx.getContext('2d');
+            
+            if (monthlyInspectionChartInstance) {
+                monthlyInspectionChartInstance.destroy();
+                monthlyInspectionChartInstance = null;
+                console.log("Destroyed existing monthlyInspectionChartInstance.");
+            }
+
+            const currentMonthColor = 'rgba(75, 192, 192, 0.8)';
+            const currentMonthBorder = 'rgba(75, 192, 192, 1)';
+            const lastYearAvgColor = 'rgba(153, 102, 255, 0.8)';
+            const lastYearAvgBorder = 'rgba(153, 102, 255, 1)';
+            const targetLineColor = 'rgba(255, 0, 0, 0.8)';
+
+            monthlyInspectionChartInstance = new Chart(chartCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: `Last Year Average`,
+                            data: chartData.lastYearAverageScores,
+                            backgroundColor: lastYearAvgColor,
+                            borderColor: lastYearAvgBorder,
+                            borderWidth: 1,
+                            borderRadius: 5,
+                        },
+                        {
+                            label: `${chartData.currentMonthName} Scores`,
+                            data: chartData.currentMonthScores,
+                            backgroundColor: currentMonthColor,
+                            borderColor: currentMonthBorder,
+                            borderWidth: 1,
+                            borderRadius: 5,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Monthly Inspection Scores: Current Month vs. Last Year Average',
+                            font: {
+                                size: 18
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 20,
+                                padding: 15,
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                targetLine: {
+                                    type: 'line',
+                                    yMin: chartData.target,
+                                    yMax: chartData.target,
+                                    borderColor: targetLineColor,
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    label: {
+                                        display: true,
+                                        content: 'Target (100%)',
+                                        position: 'end',
+                                        backgroundColor: targetLineColor,
+                                        color: '#fff',
+                                        font: {
+                                            size: 10,
+                                            weight: 'bold'
+                                        },
+                                        padding: 6,
+                                        borderRadius: 4
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Departments'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Score (%)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.7,
+                }
+            });
+            console.log("MonthlyInspectionScoresChart rendered successfully.");
+        } catch (error) {
+            console.error('Error rendering Monthly Inspection Scores Chart:', error);
+            const chartBox = document.getElementById('monthlyInspectionScoresChart').closest('.chart-box');
+            if (chartBox) {
+                chartBox.innerHTML = '<p style="color: red; text-align: center;">Failed to load Monthly Inspection Scores chart data.</p>';
+            }
+        }
+    }
+
+
+    // NEW CHART: Biannual NCR Chart
+    async function renderBiannualNCRChart() {
+        console.log("Inside renderBiannualNCRChart function.");
+        try {
+            console.log("Fetching chart data from /audits/charts/biannual_ncr_data/.");
+            const response = await fetch('/audits/charts/biannual_ncr_data/');
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("HTTP Error response text for biannual NCRs:", errorText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const chartData = await response.json();
+            console.log("Biannual NCR Chart data received:", chartData);
+
+            const ctx = document.getElementById('biannualNCRChart');
+            if (!ctx) {
+                console.error("Canvas element 'biannualNCRChart' not found. Chart cannot be rendered.");
+                const chartBox = document.getElementById('biannualNCRChart')?.closest('.chart-box');
+                if (chartBox) {
+                    chartBox.innerHTML = '<p style="color: red; text-align: center;">Failed to load Biannual NCR chart data. Canvas element missing.</p>';
+                }
+                return;
+            }
+            const chartCtx = ctx.getContext('2d');
+
+            if (biannualNCRChartInstance) {
+                biannualNCRChartInstance.destroy();
+                biannualNCRChartInstance = null;
+                console.log("Destroyed existing biannualNCRChartInstance.");
+            }
+
+            // Define colors for NCR chart
+            const totalNCRColor = 'rgba(255, 159, 64, 0.8)'; // Orange-ish
+            const totalNCRBorder = 'rgba(255, 159, 64, 1)';
+            const openNCRColor = 'rgba(255, 99, 132, 0.8)'; // Red-ish
+            const openNCRBorder = 'rgba(255, 99, 132, 1)';
+
+            biannualNCRChartInstance = new Chart(chartCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Total NCRs',
+                            data: chartData.totalNCRs,
+                            backgroundColor: totalNCRColor,
+                            borderColor: totalNCRBorder,
+                            borderWidth: 1,
+                            borderRadius: 5,
+                        },
+                        {
+                            label: 'Open NCRs',
+                            data: chartData.openNCRs,
+                            backgroundColor: openNCRColor,
+                            borderColor: openNCRBorder,
+                            borderWidth: 1,
+                            borderRadius: 5,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Biannual Audits: Total vs. Open NCRs by Lab',
+                            font: {
+                                size: 18
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 20,
+                                padding: 15,
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Laboratories'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of NCRs'
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.7,
+                }
+            });
+            console.log("BiannualNCRChart rendered successfully.");
+        } catch (error) {
+            console.error('Error rendering Biannual NCR Chart:', error);
+            const chartBox = document.getElementById('biannualNCRChart').closest('.chart-box');
+            if (chartBox) {
+                chartBox.innerHTML = '<p style="color: red; text-align: center;">Failed to load Biannual NCR chart data.</p>';
+            }
+        }
+    }
   </script>
 </body>
 </html>
