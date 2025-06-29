@@ -14,12 +14,13 @@ class Audit(models.Model):
         ('monthly', 'Monthly Inspection'),
         ('biannual', 'Biannual Environment Audit'),
         ('hazardous', 'Hazardous Waste Inspection'),
-        ('annual_refresher', 'Annual Environmental Refresher'), # NEW
-        ('hse_induction', 'HSE Induction'),                       # NEW
+        ('annual_refresher', 'Annual Environmental Refresher'), 
+        ('hse_induction', 'HSE Induction'),
+        ('environmental_incidents', 'Environmental Incidents')
     ]
 
     audit_type = models.CharField(
-        max_length=20,
+        max_length=25,
         choices=AUDIT_TYPE_CHOICES,
         default='monthly'
     )
@@ -114,6 +115,11 @@ class Audit(models.Model):
 
     ######################### HSE INDUCTIONS ###############################
     number_of_inductions = models.IntegerField(default=0, null=True, blank=True)
+
+    ######################### ENVIRONMENTAL INCIDENTS ###############################
+    number_of_incidents = models.IntegerField(null=True, blank=True, default=0, help_text="Number of environmental incidents recorded.")
+    details = models.TextField(blank=True, null=True, help_text="Details of the environmental incidents.")
+
 
     def save(self, *args, **kwargs):
         if not self.AuditID:

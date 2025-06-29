@@ -87,6 +87,17 @@ class HSEInductionForm(forms.ModelForm):
             'number_of_inductions',
         ]
 
+class EnvironmentalIncidentForm(AuditForm):
+    class Meta():
+        model = Audit
+        fields = ['date', 'location', 'number_of_incidents', 'details']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'details': forms.Textarea(attrs={'rows': 4}),
+        }
+
+
+
 
 # CRITICAL: CustomUserCreationForm
 class CustomUserCreationForm(UserCreationForm):
