@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>HSE Dashboard</title>
+  <title>Environmental Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     /* Your existing CSS */
@@ -22,55 +22,135 @@
     }
     .sidebar button:hover { background-color: #d1d5db; }
     .main { flex: 1; padding: 30px; overflow-y: auto; }
-    .title { text-align: center; font-size: 32px; font-weight: bold; margin-bottom: 30px; }
+    .title { 
+      text-align: center; 
+      font-size: 32px; 
+      font-weight: bold; 
+      margin-bottom: 30px;
+      background: linear-gradient(135deg, #667eea 0%, #4b57a2 100%);
+      color: white;
+      padding: 12px 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      display: block;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
+      overflow: hidden;
+    }
+    .title::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    .title:hover::before {
+      left: 100%;
+    }
     .chart-grid {
-      display: grid; 
-      /* Adjusted to fit 2 columns per row, with indicators potentially taking 1 */
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-      gap: 20px; margin-bottom: 40px;
+      display: flex;
+      gap: 20px;
+      margin-bottom: 40px;
+      height: calc(100vh - 100px); /* Increased height to fill more of the page */
+    }
+    .charts-section {
+      flex: 2; /* Increased from 1.2 to 1.3 - gives charts 5% more space */
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .indicators-section {
+      flex: 1; /* Takes up 1/2.3 of the space (reduced from 1/2.2) */
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(4, 1fr);
+      gap: 20px;
+    }
+    
+    /* Responsive design for smaller screens */
+    @media (max-width: 1400px) {
+      .chart-grid {
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 150px);
+      }
+      .charts-section {
+        flex: none;
+        margin-bottom: 20px;
+      }
+      .indicators-section {
+        flex: none;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+      }
+      .chart-box {
+        height: 400px;
+        min-height: 400px;
+      }
+      .indicator-box {
+        height: 250px;
+        min-height: 250px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .indicators-section {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, 1fr);
+      }
+      .indicator-box {
+        height: 200px;
+        min-height: 200px;
+      }
     }
     .chart-box {
       background-color: #ffffff; padding: 20px; 
       border-radius: 10px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      height: 400px; /* Kept fixed height as in your original file */
+      flex: 1; /* Each chart takes equal height */
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      min-height: 0; /* Allow flex shrinking */
+      min-height: 400px; /* Reduced from 500px to 400px for better proportion */
     }
 
     /* Styles for the dynamic indicators */
     .indicator-box {
-      background-color: #ffffff; padding: 20px; border-radius: 10px;
+      background-color: #ffffff; padding: 18px 10px; border-radius: 10px;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       text-align: center;
-      height: 300px; /* Adjust as needed */
-    }
-    .indicator-box h3 {
-      font-size: 1.4em;
-      margin-bottom: 15px;
-      color: #333;
+      min-height: 0;
+      min-height: 200px;
     }
     .completion-percentage {
-      font-size: 3em;
+      font-size: 2.2em;
       font-weight: bold;
-      color: #28a745; /* Green color for positive completion */
-      margin-bottom: 15px;
+      color: #28a745;
+      margin-bottom: 8px;
+      margin-top: 0;
     }
     .completion-percentage.below-100 {
       color: #dc3545; /* Red color when below 100% */
     }
     .progress-bar-container {
-      width: 80%;
+      width: 100%;
+      max-width: 260px;
       background-color: #e0e0e0;
       border-radius: 10px;
       overflow: hidden;
-      height: 20px;
-      margin-top: 10px;
+      height: 15px;
+      margin: 0 auto 8px auto;
+      box-sizing: border-box;
     }
     .progress-bar {
       height: 100%;
@@ -83,15 +163,22 @@
       background-color: #dc3545; /* Red when below 100% */
     }
     .indicator-details {
-      font-size: 0.9em;
+      font-size: 0.95em;
       color: #666;
-      margin-top: 10px;
+      margin-top: 8px;
+      word-break: break-word;
     }
     /* Specific styling for the new environmental incidents indicator */
     #environmentalIncidentsIndicatorBox .incident-counts div {
         margin-top: 5px;
         font-size: 1.1em;
         color: #555;
+    }
+    #environmentalIncidentsIndicatorBox .incident-counts .quantity-value {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 10px 0;
     }
     #environmentalIncidentsIndicatorBox select {
         padding: 8px;
@@ -102,6 +189,26 @@
         max-width: 250px;
     }
 
+    /* Specific styling for the new waste quantity indicator */
+    #wasteQuantityIndicatorBox .waste-counts div {
+        margin-top: 5px;
+        font-size: 1.1em;
+        color: #555;
+    }
+    #wasteQuantityIndicatorBox .waste-counts .quantity-value {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 10px 0;
+    }
+    #wasteQuantityIndicatorBox select {
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-bottom: 15px; /* Space between dropdown and counts */
+        width: 80%;
+        max-width: 250px;
+    }
 
     /* UPDATED/NEW MODAL CSS FOR BETTER FIT */
     .modal {
@@ -249,51 +356,65 @@
     </div>
 
     <div class="main">
-      <div class="title">HSE Dashboard</div>
+      <div class="title">Environmental Dashboard</div>
       <div class="chart-grid">
-        <!-- FIRST CHART: Monthly Inspection Scores by Department -->
-        <div class="chart-box" id="monthlyInspectionChartBox" style="grid-column: span 2;">
-          <canvas id="monthlyInspectionScoresChart"></canvas>
-        </div>
-        <!-- Biannual NCRs by Lab Chart -->
-        <div class="chart-box" id="biannualNCRChartBox" style="grid-column: span 2;">
-          <canvas id="biannualNCRChart"></canvas>
-        </div>
-
-        <!-- HSE Inductions Completion Indicator -->
-        <div class="indicator-box" id="hseInductionIndicatorBox">
-          <h3>HSE Inductions Completion</h3>
-          <div class="completion-percentage" id="hseInductionPercentage">0%</div>
-          <div class="progress-bar-container">
-            <div class="progress-bar" id="hseInductionProgressBar"></div>
+        <div class="charts-section">
+          <!-- FIRST CHART: Monthly Inspection Scores by Department -->
+          <div class="chart-box" id="monthlyInspectionChartBox">
+            <canvas id="monthlyInspectionScoresChart"></canvas>
           </div>
-          <div class="indicator-details" id="hseInductionDetails"></div>
-        </div>
-
-        <!-- Annual Environmental Refresher Completion Indicator -->
-        <div class="indicator-box" id="annualRefresherIndicatorBox">
-          <h3>Annual Environmental Refresher Completion</h3>
-          <div class="completion-percentage" id="annualRefresherPercentage">0%</div>
-          <div class="progress-bar-container">
-            <div class="progress-bar" id="annualRefresherProgressBar"></div>
+          <!-- Biannual NCRs by Lab Chart -->
+          <div class="chart-box" id="biannualNCRChartBox">
+            <canvas id="biannualNCRChart"></canvas>
           </div>
-          <div class="indicator-details" id="annualRefresherDetails"></div>
         </div>
 
-
-        {# NEW: Environmental Incidents Indicator Box #}
-        <div class="indicator-box" id="environmentalIncidentsIndicatorBox" style="grid-column: span 2; height: 200px;">
-            <h3>Environmental Incidents</h3>
-            <select id="environmentalIncidentsLocationFilter" onchange="renderEnvironmentalIncidentsIndicator(this.value)">
-                {# Options will be dynamically loaded by JS #}
-            </select>
-            <div class="incident-counts">
-                <div id="incidentsPastMonth">Incidents (Past Month): 0</div>
-                <div id="incidentsTotal">Total Incidents: 0</div>
+        <div class="indicators-section">
+          <!-- HSE Inductions Completion Indicator -->
+          <div class="indicator-box" id="hseInductionIndicatorBox">
+            <h3>HSE Inductions Completion</h3>
+            <div class="completion-percentage" id="hseInductionPercentage">0%</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar" id="hseInductionProgressBar"></div>
             </div>
-            {# No progress bar or percentage for this indicator, as per request #}
-        </div>
+            <div class="indicator-details" id="hseInductionDetails"></div>
+          </div>
 
+          <!-- Environmental Refresher Completion Indicator -->
+          <div class="indicator-box" id="annualRefresherIndicatorBox">
+            <h3>Environmental Refresher Completion</h3>
+            <div class="completion-percentage" id="annualRefresherPercentage">0%</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar" id="annualRefresherProgressBar"></div>
+            </div>
+            <div class="indicator-details" id="annualRefresherDetails"></div>
+          </div>
+
+          {# NEW: Environmental Incidents Indicator Box #}
+          <div class="indicator-box" id="environmentalIncidentsIndicatorBox">
+              <h3>Environmental Incidents</h3>
+              <select id="environmentalIncidentsLocationFilter" onchange="renderEnvironmentalIncidentsIndicator(this.value)">
+                  {# Options will be dynamically loaded by JS #}
+              </select>
+              <div class="incident-counts">
+                  <div>Incidents (Past Month): <span class="quantity-value" id="incidentsPastMonthValue">0</span></div>
+                  <div>Total Incidents: <span class="quantity-value" id="incidentsTotalValue">0</span></div>
+              </div>
+              {# No progress bar or percentage for this indicator, as per request #}
+          </div>
+
+          {# NEW: Waste Quantity Indicator Box #}
+          <div class="indicator-box" id="wasteQuantityIndicatorBox">
+              <h3>Waste Quantity</h3>
+              <select id="wasteQuantityLocationFilter" onchange="renderWasteQuantityIndicator(this.value)">
+                  {# Options will be dynamically loaded by JS #}
+              </select>
+              <div class="waste-counts">
+                  <div>Total Waste: <span class="quantity-value" id="totalWasteQuantityValue">0L</span></div>
+              </div>
+              {# No progress bar or percentage for this indicator, as per request #}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -304,7 +425,7 @@
       <span class="close" onclick="closeModal('chooseAuditTypeModal')">&times;</span>
       <h2>Select Audit Type</h2>
       <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'chemicalAuditModal')">Hazardous Waste Log</button><br><br>
-      <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'monthlyAuditModal')">Monthly Inspection</button><br><br>
+      <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'chooseMonthlyLabModal')">Monthly Inspection</button><br><br>
       <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'biannualAuditModal')">Biannual Environment Audit</button><br><br>
       <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'hazardousAuditModal')">Hazardous Waste Inspection</button><br><br>
       <button class="audit-type-button" onclick="switchModal('chooseAuditTypeModal', 'annualRefresherModal')">Annual Environmental Refresher</button><br><br>
@@ -325,18 +446,123 @@
     </div>
   </div>
 
-  <div id="monthlyAuditModal" class="modal hidden">
+  <!-- New: Modal for selecting lab for monthly inspection -->
+  <div id="chooseMonthlyLabModal" class="modal hidden">
     <div class="modal-content">
-      <span class="close" onclick="closeModal('monthlyAuditModal')">&times;</span>
-      <h2>Monthly Inspection</h2>
-      <form method="post" action="{% url 'create_monthly_audit' %}">
+      <span class="close" onclick="closeModal('chooseMonthlyLabModal')">&times;</span>
+      <h2>Select Lab for Monthly Inspection</h2>
+      <button class="audit-type-button" onclick="switchModal('chooseMonthlyLabModal', 'monthlyFisheriesModal')">KBD Fisheries Lab</button><br>
+      <button class="audit-type-button" onclick="switchModal('chooseMonthlyLabModal', 'monthlyAlgaeModal')">KBD Algae Lab</button><br>
+      <button class="audit-type-button" onclick="switchModal('chooseMonthlyLabModal', 'monthlyAquacultureModal')">KBD Aquaculture Lab</button><br>
+      <button class="audit-type-button" onclick="switchModal('chooseMonthlyLabModal', 'monthlyDubaModal')">Duba Lab</button><br>
+      <button class="audit-type-button" onclick="switchModal('chooseMonthlyLabModal', 'monthlyJizanModal')">Jizan Lab</button><br>
+      <button class="audit-type-button" onclick="switchModal('chooseMonthlyLabModal', 'monthlyJubailModal')">Jubail Lab</button><br>
+      <button class="audit-type-button" onclick="switchModal('chooseMonthlyLabModal', 'monthlyAlgaeFacilityModal')">KBD Algae Facility Laboratory</button><br>
+      <button class="audit-type-button" onclick="switchModal('chooseMonthlyLabModal', 'monthlyAlgaeFacilityPhase2Modal')">Algae Facility Phase 2</button><br>
+      <button class="audit-type-button" onclick="switchModal('chooseMonthlyLabModal', 'monthlyAlraesModal')">Al Raes Sea Cage Farms</button>
+    </div>
+  </div>
+
+  <!-- 9 Lab-specific modals for monthly inspection forms -->
+  <div id="monthlyFisheriesModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('monthlyFisheriesModal')">&times;</span>
+      <h2>KBD Fisheries Lab Monthly Inspection</h2>
+      <form method="post" action="{% url 'create_monthly_inspection_fisheries' %}">
         {% csrf_token %}
-        {{ monthly_form.as_p }}
+        {{ main_lab_monthly_form.as_p }}
         <button type="submit">Submit</button>
       </form>
     </div>
   </div>
-
+  <div id="monthlyAlgaeModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('monthlyAlgaeModal')">&times;</span>
+      <h2>KBD Algae Lab Monthly Inspection</h2>
+      <form method="post" action="{% url 'create_monthly_inspection_algae' %}">
+        {% csrf_token %}
+        {{ main_lab_monthly_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  <div id="monthlyAquacultureModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('monthlyAquacultureModal')">&times;</span>
+      <h2>KBD Aquaculture Lab Monthly Inspection</h2>
+      <form method="post" action="{% url 'create_monthly_inspection_aquaculture' %}">
+        {% csrf_token %}
+        {{ main_lab_monthly_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  <div id="monthlyDubaModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('monthlyDubaModal')">&times;</span>
+      <h2>Duba Lab Monthly Inspection</h2>
+      <form method="post" action="{% url 'create_monthly_inspection_duba' %}">
+        {% csrf_token %}
+        {{ main_lab_monthly_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  <div id="monthlyJizanModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('monthlyJizanModal')">&times;</span>
+      <h2>Jizan Lab Monthly Inspection</h2>
+      <form method="post" action="{% url 'create_monthly_inspection_jizan' %}">
+        {% csrf_token %}
+        {{ main_lab_monthly_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  <div id="monthlyJubailModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('monthlyJubailModal')">&times;</span>
+      <h2>Jubail Lab Monthly Inspection</h2>
+      <form method="post" action="{% url 'create_monthly_inspection_jubail' %}">
+        {% csrf_token %}
+        {{ main_lab_monthly_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  <div id="monthlyAlgaeFacilityModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('monthlyAlgaeFacilityModal')">&times;</span>
+      <h2>KBD Algae Facility Laboratory Monthly Inspection</h2>
+      <form method="post" action="{% url 'create_monthly_inspection_algae_facility' %}">
+        {% csrf_token %}
+        {{ algae_facility_monthly_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  <div id="monthlyAlgaeFacilityPhase2Modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('monthlyAlgaeFacilityPhase2Modal')">&times;</span>
+      <h2>Algae Facility Phase 2 Monthly Inspection</h2>
+      <form method="post" action="{% url 'create_monthly_inspection_algae_facility_phase2' %}">
+        {% csrf_token %}
+        {{ algae_facility_monthly_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  <div id="monthlyAlraesModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('monthlyAlraesModal')">&times;</span>
+      <h2>Al Raes Sea Cage Farms Monthly Inspection</h2>
+      <form method="post" action="{% url 'create_monthly_inspection_alraes' %}">
+        {% csrf_token %}
+        {{ alraes_monthly_form.as_p }}
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
 
   <div id="biannualAuditModal" class="modal hidden">
     <div class="modal-content">
@@ -1062,6 +1288,10 @@
         console.log("Calling renderEnvironmentalIncidentsIndicator().");
         renderEnvironmentalIncidentsIndicator(); // NEW CALL
         console.log("renderEnvironmentalIncidentsIndicator() called.");
+
+        console.log("Calling renderWasteQuantityIndicator().");
+        renderWasteQuantityIndicator(); // NEW CALL
+        console.log("renderWasteQuantityIndicator() called.");
     }
 
     let monthlyInspectionChartInstance = null;
@@ -1419,13 +1649,13 @@
             const data = await response.json();
             console.log("Environmental Incidents data received:", data);
 
-            const incidentsPastMonthElement = document.getElementById('incidentsPastMonth');
-            const incidentsTotalElement = document.getElementById('incidentsTotal');
+            const incidentsPastMonthElement = document.getElementById('incidentsPastMonthValue');
+            const incidentsTotalElement = document.getElementById('incidentsTotalValue');
             const locationFilterDropdown = document.getElementById('environmentalIncidentsLocationFilter');
 
             if (incidentsPastMonthElement && incidentsTotalElement && locationFilterDropdown) {
-                incidentsPastMonthElement.textContent = `Incidents (Past Month): ${data.incidents_past_month}`;
-                incidentsTotalElement.textContent = `Total Incidents: ${data.total_incidents}`;
+                incidentsPastMonthElement.textContent = data.incidents_past_month;
+                incidentsTotalElement.textContent = data.total_incidents;
 
                 // Populate the dropdown only if it's the initial load or needs recreation
                 // Check if dropdown options need to be updated (e.g., first load or options changed)
@@ -1454,6 +1684,69 @@
             console.error('Error rendering Environmental Incidents Indicator:', error);
             if (!document.getElementById('environmentalIncidentsIndicatorBox').querySelector('.error-message')) {
                 setChartError('environmentalIncidentsIndicatorBox', `Failed to load Environmental Incidents data.`, 'Environmental Incidents');
+            }
+        }
+    }
+
+    // NEW: Waste Quantity Indicator
+    async function renderWasteQuantityIndicator(locationFilter = '') {
+        console.log(`Inside renderWasteQuantityIndicator function with filter: ${locationFilter}`);
+        const indicatorBox = document.getElementById('wasteQuantityIndicatorBox');
+        if (!indicatorBox) {
+            console.error("Parent element 'wasteQuantityIndicatorBox' not found. Indicator cannot be rendered.");
+            return;
+        }
+        setChartError('wasteQuantityIndicatorBox', ""); // Clear previous errors
+
+        try {
+            let fetchUrl = '/audits/charts/total_waste_quantity_data/';
+            if (locationFilter) {
+                fetchUrl += `?location=${encodeURIComponent(locationFilter)}`;
+            }
+            console.log(`Fetching data for Waste Quantity from ${fetchUrl}`);
+            const response = await fetch(fetchUrl);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("HTTP Error response text for Waste Quantity:", errorText);
+                setChartError('wasteQuantityIndicatorBox', `Error loading data: ${response.status} ${response.statusText}.`, 'Waste Quantity');
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log("Waste Quantity data received:", data);
+
+            const totalWasteQuantityElement = document.getElementById('totalWasteQuantityValue');
+            const locationFilterDropdown = document.getElementById('wasteQuantityLocationFilter');
+
+            if (totalWasteQuantityElement && locationFilterDropdown) {
+                totalWasteQuantityElement.textContent = `${data.total_waste_quantity}L`;
+
+                // Populate the dropdown only if it's the initial load or needs recreation
+                // Check if dropdown options need to be updated (e.g., first load or options changed)
+                const currentOptions = Array.from(locationFilterDropdown.options).map(opt => opt.value);
+                const newOptionsValues = data.location_options.map(opt => opt.value);
+                const optionsChanged = currentOptions.length !== newOptionsValues.length || !currentOptions.every((val, i) => val === newOptionsValues[i]);
+
+                if (optionsChanged) {
+                    locationFilterDropdown.innerHTML = ''; // Clear existing options
+                    data.location_options.forEach(option => {
+                        const optElement = document.createElement('option');
+                        optElement.value = option.value;
+                        optElement.textContent = option.text;
+                        locationFilterDropdown.appendChild(optElement);
+                    });
+                }
+                // Set the selected value (important if it's not the first load or if filter changed)
+                locationFilterDropdown.value = data.selected_location;
+
+                console.log("Waste Quantity indicator updated successfully.");
+            } else {
+                console.error("One or more Waste Quantity indicator elements not found.");
+                setChartError('wasteQuantityIndicatorBox', `Failed to initialize indicator elements.`, 'Waste Quantity');
+            }
+        } catch (error) {
+            console.error('Error rendering Waste Quantity Indicator:', error);
+            if (!document.getElementById('wasteQuantityIndicatorBox').querySelector('.error-message')) {
+                setChartError('wasteQuantityIndicatorBox', `Failed to load Waste Quantity data.`, 'Waste Quantity');
             }
         }
     }

@@ -16,7 +16,8 @@ from django.contrib.auth.models import User, Group
 from .forms import (
     AuditForm, ChemicalAuditForm, BiannualAuditForm, MonthlyAuditForm, HazardousWasteForm,
     AnnualEnvironmentalRefresherForm, HSEInductionForm,
-    CustomUserCreationForm, CustomUserChangeForm, EnvironmentalIncidentForm
+    CustomUserCreationForm, CustomUserChangeForm, EnvironmentalIncidentForm,
+    MainLabMonthlyInspectionForm, AlRaesSeaCageFarmsMonthlyInspectionForm, AlgaeFacilityMonthlyInspectionForm,
 )
 from .models import Audit
 
@@ -111,6 +112,9 @@ def home(request):
         "annual_refresher_form": AnnualEnvironmentalRefresherForm(),
         "hse_induction_form": HSEInductionForm(),
         "environmental_incident_form": EnvironmentalIncidentForm(),
+        "main_lab_monthly_form": MainLabMonthlyInspectionForm(),
+        "algae_facility_monthly_form": AlgaeFacilityMonthlyInspectionForm(),
+        "alraes_monthly_form": AlRaesSeaCageFarmsMonthlyInspectionForm(),
         "audits": Audit.objects.all() if is_authenticated_user else [], 
         "user_creation_form": user_creation_form_instance,
         "is_administrator": is_admin,
@@ -137,31 +141,40 @@ def create_chemical_audit(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
 @login_required # Retain login_required for backend security
-def create_monthly_audit(request):
-    """
-    Handles creation of Monthly Inspection audits and calculates score.
-    """
-    if request.method == "POST":
-        form = MonthlyAuditForm(request.POST)
-        if form.is_valid():
-            audit = form.save(commit=False)
-            audit.audit_type = 'monthly'
+def create_monthly_inspection_fisheries(request):
+    return _handle_monthly_inspection(request, MainLabMonthlyInspectionForm, 'KBD Fisheries Lab')
 
-            true_count = 0
-            for field_name in MONTHLY_METRIC_FIELDS:
-                if form.cleaned_data.get(field_name, False):
-                    true_count += 1
-            
-            if TOTAL_MONTHLY_METRICS > 0:
-                audit.score = (true_count / TOTAL_MONTHLY_METRICS) * 100
-            else:
-                audit.score = 0.0 # Handle case where no metrics are defined
+@login_required # Retain login_required for backend security
+def create_monthly_inspection_algae(request):
+    return _handle_monthly_inspection(request, MainLabMonthlyInspectionForm, 'KBD Algae Lab')
 
-            audit.save()
-            return JsonResponse({'status': 'success', 'message': 'Monthly Inspection created successfully'})
-        else:
-            return JsonResponse({'status': 'error', 'message': 'Invalid form data', 'errors': form.errors}, status=400)
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+@login_required # Retain login_required for backend security
+def create_monthly_inspection_aquaculture(request):
+    return _handle_monthly_inspection(request, MainLabMonthlyInspectionForm, 'KBD Aquaculture Lab')
+
+@login_required # Retain login_required for backend security
+def create_monthly_inspection_duba(request):
+    return _handle_monthly_inspection(request, MainLabMonthlyInspectionForm, 'Duba Lab')
+
+@login_required # Retain login_required for backend security
+def create_monthly_inspection_jizan(request):
+    return _handle_monthly_inspection(request, MainLabMonthlyInspectionForm, 'Jizan Lab')
+
+@login_required # Retain login_required for backend security
+def create_monthly_inspection_jubail(request):
+    return _handle_monthly_inspection(request, MainLabMonthlyInspectionForm, 'Jubail Lab')
+
+@login_required # Retain login_required for backend security
+def create_monthly_inspection_algae_facility(request):
+    return _handle_monthly_inspection(request, AlgaeFacilityMonthlyInspectionForm, 'KBD Algae Facility Laboratory')
+
+@login_required # Retain login_required for backend security
+def create_monthly_inspection_algae_facility_phase2(request):
+    return _handle_monthly_inspection(request, AlgaeFacilityMonthlyInspectionForm, 'Algae Facility Phase 2')
+
+@login_required # Retain login_required for backend security
+def create_monthly_inspection_alraes(request):
+    return _handle_monthly_inspection(request, AlRaesSeaCageFarmsMonthlyInspectionForm, 'Al Raes Sea Cage Farms')
 
 @login_required # Retain login_required for backend security
 def create_biannual_audit(request):
@@ -406,7 +419,6 @@ def get_all_audits(request):
                 audit_data['number_of_inductions'] = audit.number_of_inductions
             elif audit.audit_type == 'chemical_waste' or audit.audit_type == 'hazardous':
                 audit_data['quantity_liters'] = audit.quantity_liters
-                audit_data['description'] = audit.description
             elif audit.audit_type == 'environmental_incidents': # NEW: Environmental Incidents
                 audit_data['number_of_incidents'] = audit.number_of_incidents
                 audit_data['details'] = audit.details
@@ -743,6 +755,40 @@ def get_waste_quantity_per_lab(request):
         traceback.print_exc()
         return JsonResponse({"error": f"Failed to retrieve waste quantity per lab data: {str(e)}"}, status=500)
     
+@login_required
+def get_total_waste_quantity_data(request):
+    """
+    Provides data for the Waste Quantity indicator,
+    including total waste quantity with an optional location filter.
+    """
+    try:
+        location_filter = request.GET.get('location', '')
+        
+        # Base query for waste audits (chemical_waste and hazardous types)
+        waste_query = Audit.objects.filter(
+            audit_type__in=['chemical_waste', 'hazardous']
+        )
+
+        # Apply location filter if provided
+        if location_filter and location_filter != '':
+            waste_query = waste_query.filter(location=location_filter)
+
+        # Calculate total waste quantity
+        total_waste_quantity = waste_query.aggregate(Sum('quantity_liters'))['quantity_liters__sum'] or 0
+        
+        # Prepare location options for the dropdown
+        # Include an "All Locations" option at the beginning
+        location_options = [{'value': '', 'text': 'All Locations'}] + \
+                           [{'value': choice[0], 'text': choice[1]} for choice in LOCATION_CHOICES]
+
+        return JsonResponse({
+            'total_waste_quantity': round(total_waste_quantity, 2),
+            'location_options': location_options,
+            'selected_location': location_filter,
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({"error": f"Failed to retrieve waste quantity data: {str(e)}"}, status=500)
 
 
 def get_environmental_incidents_data(request):
@@ -791,4 +837,104 @@ def get_environmental_incidents_data(request):
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({"error": f"Failed to retrieve environmental incidents data: {str(e)}"}, status=500)
+
+# --- Shared handler for all monthly inspection forms ---
+def _handle_monthly_inspection(request, form_class, location_value):
+    # Define metric fields for each form type
+    MAIN_LAB_FIELDS = [
+        'fire_extinguishers_checked', 'emergency_exits_inspected', 'first_aid_kits_checked',
+        'spill_kits_stocked', 'ppe_stocked', 'lab_coats_clean',
+        'biohazard_waste_reviewed', 'chemical_waste_reviewed', 'glass_sharp_waste_reviewed',
+        'lab_surfaces_clean', 'balances_calibrated_cleaned', 'microscopes_calibrated_cleaned',
+        'freezers_functional_clean', 'secondary_containment_ok', 'evidence_of_spills_or_expired_stock',
+        'chemicals_stored_labelled', 'safety_data_sheets_available', 'chemicals_in_inventory',
+        'chemical_containers_closed_and_disposed', 'spill_kit_accessible',
+        'bio_sample_temp_maintained', 'lab_consumables_stock_ok', 'storage_conditions_ok', 'training_up_to_date',
+    ]
+    
+    # Fields where "No" is positive (inverted logic)
+    ALRAES_INVERTED_FIELDS = [
+        'over_accumulation_fish_waste',  # "Is there any over accumulation..." - No is good
+        'visible_impact_on_marine_life',  # "Is there any visible impact..." - No is good
+        'significant_variations_water_quality',  # "Are there any significant variations..." - No is good
+        'unusual_incidents_observations',  # "Were there any unusual incidents..." - No is good
+        'record_environmental_incidents_past_week',  # "Is there a record of any environmental incidents..." - No is good
+    ]
+    
+    ALGAE_FACILITY_INVERTED_FIELDS = [
+        'signs_overflow_leakage_evaporation_pond',  # "Are there any signs of overflow..." - No is good
+        'visible_mosquito_larvae_presence',  # "Is there any visible mosquito..." - No is good
+        'other_signs_pests_within_site',  # "Are there any other signs of pests..." - No is good
+        'visible_plume_emissions_spray_dryer',  # "Are there any visible plume emissions..." - No is good
+        'odours_from_site_operations',  # "Are there any odours from the site operations..." - No is good
+    ]
+    
+    ALRAES_FIELDS = [
+        'over_accumulation_fish_waste', 'nets_checked_for_damage', 'cages_secured_to_sea_bed',
+        'operations_minimal_disturbance', 'visible_impact_on_marine_life',
+        'water_parameters_recorded', 'significant_variations_water_quality',
+        'waste_materials_properly_disposed', 'adequate_spill_kits_on_boats',
+        'unusual_incidents_observations', 'material_storage_well_maintained',
+        'spill_kit_available_storage_area', 'chemicals_lubricants_oils_secondary_containment',
+        'storage_containers_sealed_free_leaks', 'hazardous_materials_properly_stored',
+        'record_environmental_incidents_past_week',
+    ]
+    ALGAE_FACILITY_FIELDS = [
+        'coshh_register_valid_and_up_to_date', 'chemical_inspection_monthly',
+        'coshh_assessment_available_storage_location', 'all_chemicals_have_manufacturer_labels',
+        'fuels_oils_hazardous_liquids_secondary_containment', 'chemical_storage_room_proper_signage',
+        'secondary_containment_structures_good_condition', 'spill_kits_available_stocked_accessible',
+        'employees_trained_spcc_spill_response', 'evaporation_pond_free_algal_growth_contamination',
+        'evaporation_pond_clean_and_well_maintained', 'signs_overflow_leakage_evaporation_pond',
+        'water_quality_evaporation_pond_acceptable', 'log_maintained_reject_water_recycling',
+        'hazardous_waste_collected_stored_separately', 'general_waste_properly_segregated_disposed',
+        'hazardous_waste_containers_labeled_designated_areas', 'waste_collection_areas_free_spills_leaks_contamination',
+        'record_waste_collection_storage_disposal', 'general_waste_properly_managed_no_waste_lying_around',
+        'all_drums_containers_free_stagnant_water', 'visible_mosquito_larvae_presence',
+        'other_signs_pests_within_site', 'visible_plume_emissions_spray_dryer', 'odours_from_site_operations',
+    ]
+    if request.method == 'POST':
+        form = form_class(request.POST)
+        if form.is_valid():
+            audit = form.save(commit=False)
+            audit.audit_type = 'monthly'
+            audit.location = location_value
+            # Score calculation logic for each form type
+            if form_class.__name__ == 'MainLabMonthlyInspectionForm':
+                metric_fields = MAIN_LAB_FIELDS
+                inverted_fields = []
+            elif form_class.__name__ == 'AlRaesSeaCageFarmsMonthlyInspectionForm':
+                metric_fields = ALRAES_FIELDS
+                inverted_fields = ALRAES_INVERTED_FIELDS
+            elif form_class.__name__ == 'AlgaeFacilityMonthlyInspectionForm':
+                metric_fields = ALGAE_FACILITY_FIELDS
+                inverted_fields = ALGAE_FACILITY_INVERTED_FIELDS
+            else:
+                metric_fields = []
+                inverted_fields = []
+            
+            true_count = 0
+            for field_name in metric_fields:
+                field_value = form.cleaned_data.get(field_name, False)
+                # For inverted fields, "No" (False) is considered a pass
+                if field_name in inverted_fields:
+                    if not field_value:  # False/No is good for inverted fields
+                        true_count += 1
+                else:
+                    if field_value:  # True/Yes is good for normal fields
+                        true_count += 1
+            
+            total_metrics = len(metric_fields)
+            if total_metrics > 0:
+                audit.score = (true_count / total_metrics) * 100
+            else:
+                audit.score = 0.0
+            audit.completed_by = request.user
+            audit.save()
+            return JsonResponse({'status': 'success', 'message': 'Monthly inspection created successfully'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid form data', 'errors': form.errors}, status=400)
+    else:
+        form = form_class(initial={'location': location_value})
+    return render(request, 'audits/monthly_inspection_form.html', {'form': form, 'lab_name': location_value})
 

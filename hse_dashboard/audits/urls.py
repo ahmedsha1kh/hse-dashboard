@@ -10,13 +10,23 @@ urlpatterns = [
 
     # --- Audit Creation URLs (Require login) ---
     path("create_chemical_audit/", views.create_chemical_audit, name="create_chemical_audit"),
-    path("create_monthly_audit/", views.create_monthly_audit, name="create_monthly_audit"),
+    # path("create_monthly_audit/", views.create_monthly_audit, name="create_monthly_audit"),  # Commented out old generic monthly audit
     path("create_biannual_audit/", views.create_biannual_audit, name="create_biannual_audit"),
     path("create_hazardous_audit/", views.create_hazardous_audit, name="create_hazardous_audit"),
     path("create_annual_refresher_audit/", views.create_annual_refresher_audit, name="create_annual_refresher_audit"),
     path("create_hse_induction_audit/", views.create_hse_induction_audit, name="create_hse_induction_audit"),
     path("create_environmental_incident_audit/", views.create_environmental_incident_audit, name="create_environmental_incident_audit"), # NEW URL
 
+    # --- New Monthly Inspection URLs (one per lab) ---
+    path("create_monthly_inspection_fisheries/", views.create_monthly_inspection_fisheries, name="create_monthly_inspection_fisheries"),
+    path("create_monthly_inspection_algae/", views.create_monthly_inspection_algae, name="create_monthly_inspection_algae"),
+    path("create_monthly_inspection_aquaculture/", views.create_monthly_inspection_aquaculture, name="create_monthly_inspection_aquaculture"),
+    path("create_monthly_inspection_duba/", views.create_monthly_inspection_duba, name="create_monthly_inspection_duba"),
+    path("create_monthly_inspection_jizan/", views.create_monthly_inspection_jizan, name="create_monthly_inspection_jizan"),
+    path("create_monthly_inspection_jubail/", views.create_monthly_inspection_jubail, name="create_monthly_inspection_jubail"),
+    path("create_monthly_inspection_algae_facility/", views.create_monthly_inspection_algae_facility, name="create_monthly_inspection_algae_facility"),
+    path("create_monthly_inspection_algae_facility_phase2/", views.create_monthly_inspection_algae_facility_phase2, name="create_monthly_inspection_algae_facility_phase2"),
+    path("create_monthly_inspection_alraes/", views.create_monthly_inspection_alraes, name="create_monthly_inspection_alraes"),
 
     # --- Audit Management URLs (Require login) ---
     path('get-audit/<int:audit_id>/', views.get_audit_data, name='get_audit_data'),
