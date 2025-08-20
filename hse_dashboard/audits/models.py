@@ -63,34 +63,33 @@ class Audit(models.Model):
     ######################### MONTHLY INSPECTIONS ###############################
 
     #FIELDS FOR ALGAE LAB, AQUACULTURE LAB, DUBA LAB, JIZAN LAB, FISHERIES, JUBAIL LAB
-    fire_extinguishers_checked = models.BooleanField(default=False, null=True, blank=True)
-    emergency_exits_inspected = models.BooleanField(default=False, null=True, blank=True)
-    first_aid_kits_checked = models.BooleanField(default=False, null=True, blank=True)
-    spill_kits_stocked = models.BooleanField(default=False, null=True, blank=True)
-    ppe_stocked = models.BooleanField(default=False, null=True, blank=True)
-    lab_coats_clean = models.BooleanField(default=False, null=True, blank=True)
+    fire_extinguishers_checked = models.BooleanField(default=False, null=True, blank=True, verbose_name="Check fire extinguishers, and first aid kits")
+    emergency_exits_inspected = models.BooleanField(default=False, null=True, blank=True, verbose_name="Inspect emergency exits")
+    spill_kits_stocked = models.BooleanField(default=False, null=True, blank=True, verbose_name="Ensure spill kits and PPE are stocked")
+    ppe_stocked = models.BooleanField(default=False, null=True, blank=True, verbose_name="Ensure spill kits and PPE are stocked")
+    lab_coats_clean = models.BooleanField(default=False, null=True, blank=True, verbose_name="Check lab coat are clean")
 
-    biohazard_waste_reviewed = models.BooleanField(default=False, null=True, blank=True)
-    chemical_waste_reviewed = models.BooleanField(default=False, null=True, blank=True)
-    glass_sharp_waste_reviewed = models.BooleanField(default=False, null=True, blank=True)
+    biohazard_waste_reviewed = models.BooleanField(default=False, null=True, blank=True, verbose_name="Review waste disposal containers; Biohazard waste")
+    chemical_waste_reviewed = models.BooleanField(default=False, null=True, blank=True, verbose_name="Review waste disposal containers; Chemical waste")
+    glass_sharp_waste_reviewed = models.BooleanField(default=False, null=True, blank=True, verbose_name="Review waste disposal containers; Glass, sharp waste")
 
-    lab_surfaces_clean = models.BooleanField(default=False, null=True, blank=True)
-    balances_calibrated_cleaned = models.BooleanField(default=False, null=True, blank=True)
-    microscopes_calibrated_cleaned = models.BooleanField(default=False, null=True, blank=True)
-    freezers_functional_clean = models.BooleanField(default=False, null=True, blank=True)
+    lab_surfaces_clean = models.BooleanField(default=False, null=True, blank=True, verbose_name="Inspect lab surfaces and communal areas for cleanliness")
+    balances_calibrated_cleaned = models.BooleanField(default=False, null=True, blank=True, verbose_name="Calibrate and clean balances")
+    microscopes_calibrated_cleaned = models.BooleanField(default=False, null=True, blank=True, verbose_name="Calibrate and clean microscopes")
+    freezers_functional_clean = models.BooleanField(default=False, null=True, blank=True, verbose_name="Ensure all freezers are clean and fonctionnal")
 
-    secondary_containment_ok = models.BooleanField(default=False, null=True, blank=True)
-    evidence_of_spills_or_expired_stock = models.BooleanField(default=False, null=True, blank=True)
-    chemicals_stored_labelled = models.BooleanField(default=False, null=True, blank=True)
-    safety_data_sheets_available = models.BooleanField(default=False, null=True, blank=True)
-    chemicals_in_inventory = models.BooleanField(default=False, null=True, blank=True)
-    chemical_containers_closed_and_disposed = models.BooleanField(default=False, null=True, blank=True)
-    spill_kit_accessible = models.BooleanField(default=False, null=True, blank=True)
+    secondary_containment_ok = models.BooleanField(default=False, null=True, blank=True, verbose_name="Is compatible secondary containment in place and in good condition")
+    evidence_of_spills_or_expired_stock = models.BooleanField(default=False, null=True, blank=True, verbose_name="Evidence of spills, expired chemical, or excessive stock?")
+    chemicals_stored_labelled = models.BooleanField(default=False, null=True, blank=True, verbose_name="Are all chemicals stored and labelled suitablt?")
+    safety_data_sheets_available = models.BooleanField(default=False, null=True, blank=True, verbose_name="Are Safety Data sheets available?")
+    chemicals_in_inventory = models.BooleanField(default=False, null=True, blank=True, verbose_name="Are all chemicals contained in the inventory?")
+    chemical_containers_closed_and_disposed = models.BooleanField(default=False, null=True, blank=True, verbose_name="Are all chemical containers closed and empty containers labeled and disposed of appropriately?")
+    spill_kit_accessible = models.BooleanField(default=False, null=True, blank=True, verbose_name="Spill kit stocked and accessible?")
 
-    bio_sample_temp_maintained = models.BooleanField(default=False, null=True, blank=True)
-    lab_consumables_stock_ok = models.BooleanField(default=False, null=True, blank=True)
-    storage_conditions_ok = models.BooleanField(default=False, null=True, blank=True)
-    training_up_to_date = models.BooleanField(default=False, null=True, blank=True)
+    bio_sample_temp_maintained = models.BooleanField(default=False, null=True, blank=True, verbose_name="Ensure biological sample storage (refrigerators/freezers) maintains required temperatures")
+    lab_consumables_stock_ok = models.BooleanField(default=False, null=True, blank=True, verbose_name="Assess stock of lab consumables")
+    storage_conditions_ok = models.BooleanField(default=False, null=True, blank=True, verbose_name="Check storage conditions for chemicals and samples")
+    training_up_to_date = models.BooleanField(default=False, null=True, blank=True, verbose_name="Check lab users training: Lab Safety Training, Hazardous Waste Training, Emergency and Incident Preparedness, Biosafety training, Animal Exposure Medical Evaluation, Annual Environmental Refresher (online), Incident Reporting Training (Online).")
 
     # FIELDS FOR AL RAYEES SEA CAGE FARMS
     over_accumulation_fish_waste = models.BooleanField(

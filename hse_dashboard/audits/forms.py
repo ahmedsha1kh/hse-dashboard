@@ -11,7 +11,7 @@ class AuditForm(forms.ModelForm):
 class MonthlyAuditForm(forms.ModelForm):
     class Meta:
         model = Audit
-        fields = ['date', 'location', 'fire_extinguishers_checked', 'emergency_exits_inspected', 'first_aid_kits_checked', 
+        fields = ['date', 'location', 'fire_extinguishers_checked', 'emergency_exits_inspected', 
                   'spill_kits_stocked', 'ppe_stocked', 'lab_coats_clean', 'biohazard_waste_reviewed', 'chemical_waste_reviewed', 
                   'glass_sharp_waste_reviewed', 'lab_surfaces_clean', 'balances_calibrated_cleaned', 'microscopes_calibrated_cleaned',
                   'freezers_functional_clean', 'secondary_containment_ok', 'evidence_of_spills_or_expired_stock', 
@@ -179,7 +179,7 @@ class MainLabMonthlyInspectionForm(forms.ModelForm):
         model = Audit
         fields = [
             'date', 'score',
-            'fire_extinguishers_checked', 'emergency_exits_inspected', 'first_aid_kits_checked',
+            'fire_extinguishers_checked', 'emergency_exits_inspected',
             'spill_kits_stocked', 'ppe_stocked', 'lab_coats_clean',
             'biohazard_waste_reviewed', 'chemical_waste_reviewed', 'glass_sharp_waste_reviewed',
             'lab_surfaces_clean', 'balances_calibrated_cleaned', 'microscopes_calibrated_cleaned',
