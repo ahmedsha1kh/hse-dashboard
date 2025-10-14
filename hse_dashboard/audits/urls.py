@@ -10,7 +10,6 @@ urlpatterns = [
 
     # --- Audit Creation URLs (Require login) ---
     path("create_chemical_audit/", views.create_chemical_audit, name="create_chemical_audit"),
-    # path("create_monthly_audit/", views.create_monthly_audit, name="create_monthly_audit"),  # Commented out old generic monthly audit
     path("create_biannual_audit/", views.create_biannual_audit, name="create_biannual_audit"),
     path("create_hazardous_audit/", views.create_hazardous_audit, name="create_hazardous_audit"),
     path("create_annual_refresher_audit/", views.create_annual_refresher_audit, name="create_annual_refresher_audit"),

@@ -98,8 +98,6 @@ class EnvironmentalIncidentForm(AuditForm):
 
 
 
-
-# CRITICAL: CustomUserCreationForm
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(max_length=150, required=False, label="First Name")
     last_name = forms.CharField(max_length=150, required=False, label="Last Name")

@@ -5,7 +5,6 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
 # Import user_passes_test for role-based access control
-# login_required is still used for CRUD operations, but NOT for the home view
 from django.contrib.auth.decorators import login_required, user_passes_test
 import datetime
 import traceback
@@ -850,7 +849,6 @@ def _handle_monthly_inspection(request, form_class, location_value):
         'bio_sample_temp_maintained', 'lab_consumables_stock_ok', 'storage_conditions_ok', 'training_up_to_date',
     ]
     
-    # Fields where "No" is positive (inverted logic)
     ALRAES_INVERTED_FIELDS = [
         'over_accumulation_fish_waste',  # "Is there any over accumulation..." - No is good
         'visible_impact_on_marine_life',  # "Is there any visible impact..." - No is good
