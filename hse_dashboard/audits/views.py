@@ -563,8 +563,6 @@ def get_all_groups(request):
         traceback.print_exc()
         return JsonResponse({"error": f"Failed to retrieve groups: {str(e)}"}, status=500)
 
-# --- Chart data endpoints (No login_required, accessible to all, including guests) ---
-# Removed @login_required decorators from chart data views to allow guest access
 def get_monthly_inspection_scores(request):
     """
     Provides data for the Monthly Inspection Scores chart.
@@ -772,7 +770,7 @@ def get_total_waste_quantity_data(request):
         # Apply location filter if provided
         if location_filter and location_filter != '':
             waste_query = waste_query.filter(location=location_filter)
-
+ 
         # Calculate total waste quantity
         total_waste_quantity = waste_query.aggregate(Sum('quantity_liters'))['quantity_liters__sum'] or 0
         
@@ -899,7 +897,6 @@ def _handle_monthly_inspection(request, form_class, location_value):
             audit = form.save(commit=False)
             audit.audit_type = 'monthly'
             audit.location = location_value
-            # Score calculation logic for each form type
             if form_class.__name__ == 'MainLabMonthlyInspectionForm':
                 metric_fields = MAIN_LAB_FIELDS
                 inverted_fields = []
