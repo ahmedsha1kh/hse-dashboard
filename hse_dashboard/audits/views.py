@@ -351,7 +351,7 @@ def get_audit_data(request, audit_id):
         return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
 
-@login_required # Retain login_required for backend security
+@login_required
 def edit_audit(request, audit_id):
     """
     Handles editing of an existing audit.
@@ -371,23 +371,83 @@ def edit_audit(request, audit_id):
             audit_instance = form.save(commit=False)
 
             if audit_type_str == 'monthly':
-                true_count = 0
-                for field_name in MONTHLY_METRIC_FIELDS:
-                    if form.cleaned_data.get(field_name, False):
-                        true_count += 1
+                # Determine which monthly form type based on location
+                location = audit_instance.location
                 
-                if TOTAL_MONTHLY_METRICS > 0:
-                    audit_instance.score = (true_count / TOTAL_MONTHLY_METRICS) * 100
+                # Define the appropriate metric fields based on location
+                if location == 'Al Raes Sea Cage Farms':
+                    metric_fields = [
+                        'over_accumulation_fish_waste', 'nets_checked_for_damage', 'cages_secured_to_sea_bed',
+                        'operations_minimal_disturbance', 'visible_impact_on_marine_life',
+                        'water_parameters_recorded', 'significant_variations_water_quality',
+                        'waste_materials_properly_disposed', 'adequate_spill_kits_on_boats',
+                        'unusual_incidents_observations', 'material_storage_well_maintained',
+                        'spill_kit_available_storage_area', 'chemicals_lubricants_oils_secondary_containment',
+                        'storage_containers_sealed_free_leaks', 'hazardous_materials_properly_stored',
+                        'record_environmental_incidents_past_week',
+                    ]
+                    inverted_fields = [
+                        'over_accumulation_fish_waste', 'visible_impact_on_marine_life',
+                        'significant_variations_water_quality', 'unusual_incidents_observations',
+                        'record_environmental_incidents_past_week',
+                    ]
+                elif location in ['KBD Algae Facility Laboratory', 'Algae Facility Phase 2']:
+                    metric_fields = [
+                        'coshh_register_valid_and_up_to_date', 'chemical_inspection_monthly',
+                        'coshh_assessment_available_storage_location', 'all_chemicals_have_manufacturer_labels',
+                        'fuels_oils_hazardous_liquids_secondary_containment', 'chemical_storage_room_proper_signage',
+                        'secondary_containment_structures_good_condition', 'spill_kits_available_stocked_accessible',
+                        'employees_trained_spcc_spill_response', 'evaporation_pond_free_algal_growth_contamination',
+                        'evaporation_pond_clean_and_well_maintained', 'signs_overflow_leakage_evaporation_pond',
+                        'water_quality_evaporation_pond_acceptable', 'log_maintained_reject_water_recycling',
+                        'hazardous_waste_collected_stored_separately', 'general_waste_properly_segregated_disposed',
+                        'hazardous_waste_containers_labeled_designated_areas', 'waste_collection_areas_free_spills_leaks_contamination',
+                        'record_waste_collection_storage_disposal', 'general_waste_properly_managed_no_waste_lying_around',
+                        'all_drums_containers_free_stagnant_water', 'visible_mosquito_larvae_presence',
+                        'other_signs_pests_within_site', 'visible_plume_emissions_spray_dryer', 'odours_from_site_operations',
+                    ]
+                    inverted_fields = [
+                        'signs_overflow_leakage_evaporation_pond', 'visible_mosquito_larvae_presence',
+                        'other_signs_pests_within_site', 'visible_plume_emissions_spray_dryer',
+                        'odours_from_site_operations',
+                    ]
+                else:  # Main Lab locations
+                    metric_fields = [
+                        'fire_extinguishers_checked', 'emergency_exits_inspected', 'first_aid_kits_checked',
+                        'spill_kits_stocked', 'ppe_stocked', 'lab_coats_clean',
+                        'biohazard_waste_reviewed', 'chemical_waste_reviewed', 'glass_sharp_waste_reviewed',
+                        'lab_surfaces_clean', 'balances_calibrated_cleaned', 'microscopes_calibrated_cleaned',
+                        'freezers_functional_clean', 'secondary_containment_ok', 'evidence_of_spills_or_expired_stock',
+                        'chemicals_stored_labelled', 'safety_data_sheets_available', 'chemicals_in_inventory',
+                        'chemical_containers_closed_and_disposed', 'spill_kit_accessible',
+                        'bio_sample_temp_maintained', 'lab_consumables_stock_ok', 'storage_conditions_ok', 'training_up_to_date',
+                    ]
+                    inverted_fields = []
+                
+                # Calculate score with inverted logic
+                true_count = 0
+                for field_name in metric_fields:
+                    field_value = form.cleaned_data.get(field_name, False)
+                    # For inverted fields, "No" (False) is considered a pass
+                    if field_name in inverted_fields:
+                        if not field_value:  # False/No is good for inverted fields
+                            true_count += 1
+                    else:
+                        if field_value:  # True/Yes is good for normal fields
+                            true_count += 1
+                
+                total_metrics = len(metric_fields)
+                if total_metrics > 0:
+                    audit_instance.score = (true_count / total_metrics) * 100
                 else:
                     audit_instance.score = 0.0
             
             audit_instance.save()
             return JsonResponse({'status': 'success', 'message': 'Audit updated successfully'})
         else:
-            print(form.errors) # Log errors for debugging
+            print(form.errors)
             return JsonResponse({'status': 'error', 'message': 'Invalid form data', 'errors': form.errors}, status=400)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
-
 
 @login_required # Retain login_required for backend security
 def get_all_audits(request):
