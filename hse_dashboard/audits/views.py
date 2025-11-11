@@ -34,7 +34,7 @@ AUDIT_TYPE_FORMS = {
 LOCATION_CHOICES = (
     ('', 'Select Location'),
     ('KBD Fisheries Lab', 'KBD Fisheries Lab'),
-    ('KBD Algae Lab', 'KBD Algae Lab'),
+    ('KBD Algae Lab', 'KBD Algae Lab'),  
     ('KBD Aquaculture Lab', 'KBD Aquaculture Lab'),
     ('KBD Algae Facility Laboratory', 'KBD Algae Facility Laboratory'),
     ('Duba Lab', 'Duba Lab'),
@@ -85,7 +85,7 @@ def is_administrator(user):
     """
     # Guests will not be authenticated, so request.user.is_authenticated will be False
     # and is_superuser will be False. Their group check will also fail.
-    # This function is used by @user_passes_test decorators to protect backend views.
+    # This function is used by @user_passes_test decorators to protect restricted views such as create_user.
     return user.is_authenticated and (user.is_superuser or user.groups.filter(name='Administrator').exists())
 
 def home(request):
@@ -275,33 +275,34 @@ def create_environmental_incident_audit(request):
 
 
 # --- Audit Get/Edit/Delete Views (Require login) ---
-@login_required # Retain login_required for backend security
+@login_required
 def get_audit_data(request, audit_id):
     """
     Retrieves and serializes data for a specific audit.
     Includes type-specific fields.
     """
     try:
-        audit = get_object_or_404(Audit, id=audit_id)
-        audit_type_str = audit.audit_type
-        form_class = AUDIT_TYPE_FORMS.get(audit_type_str)
-
+        audit = get_object_or_404(Audit, id=audit_id) # Retrieve the audit object from the database or return 404 if not found
+        audit_type_str = audit.audit_type # Get the audit type as a string (e.g., 'monthly_inspection', 'biannual_environment')
+        form_class = AUDIT_TYPE_FORMS.get(audit_type_str) # Look up the appropriate form class from the AUDIT_TYPE_FORMS dictionary
+        
+        # Validate that a form class exists for this audit type
         if not form_class:
             return JsonResponse({"error": "No specific form found for this audit type", "audit_type": audit_type_str}, status=400)
-
-        form = form_class(instance=audit)
-        serialized_data = {}
+        
+        form = form_class(instance=audit) # Instantiate the form with the audit instance to access its fields
+        serialized_data = {} # Initialize an empty dictionary to store serialized field data
         for field_name, form_field in form.fields.items():
-            value = getattr(audit, field_name, None)
-            if isinstance(value, datetime.date):
+            value = getattr(audit, field_name, None) # Get the actual value of this field from the audit object
+            if isinstance(value, datetime.date): # Handle date objects by converting to ISO format string (YYYY-MM-DD)
                 serialized_data[field_name] = value.isoformat()
-            elif isinstance(value, datetime.datetime):
+            elif isinstance(value, datetime.datetime): 
                 serialized_data[field_name] = value.isoformat()
-            elif isinstance(value, bool):
+            elif isinstance(value, bool): # Boolean values are directly serializable to JSON
                 serialized_data[field_name] = value
-            elif isinstance(value, (int, float)):
+            elif isinstance(value, (int, float)): # Handle numeric values (integers and floats)
                 if field_name == 'score' and value is not None:
-                    serialized_data[field_name] = f"{value:.2f}"
+                    serialized_data[field_name] = f"{value:.2f}" # Special formatting for score field: display with 2 decimal places
                 else:
                     serialized_data[field_name] = value
             elif value is None:
@@ -335,7 +336,7 @@ def get_audit_data(request, audit_id):
             serialized_data['number_of_inductions'] = audit.number_of_inductions
         elif audit_type_str == 'chemical_waste' or audit_type_str == 'hazardous': # Hazardous also uses these
             serialized_data['quantity_liters'] = audit.quantity_liters
-            serialized_data['description'] = audit.description
+            #serialized_data['description'] = audit.description
         elif audit_type_str == 'environmental_incidents': # NEW: Environmental Incidents
             serialized_data['number_of_incidents'] = audit.number_of_incidents
             serialized_data['details'] = audit.details
@@ -445,20 +446,24 @@ def delete_audit(request, audit_id):
             return JsonResponse({'status': 'error', 'message': f'An unexpected error occurred: {str(e)}'}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
-# --- User Management Views (Restricted to Administrators/Superusers via @user_passes_test) ---
+# User Management Views (Restricted to Administrators/Superusers via @user_passes_test) 
 @login_required # Requires login
 @user_passes_test(is_administrator, login_url='/accounts/login/') # Requires admin role; uses default login_url
 def create_user(request):
     """
     Handles creation of new users. Restricted to Administrators.
     """
-    if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
+        
+    if request.method == 'POST': # Check if the request was made via the POST method (i.e., form submission)
+        form = CustomUserCreationForm(request.POST) # Initialize a user creation form with the submitted POST data
+        if form.is_valid(): # If valid, save the form to create a new user instance
             user = form.save()
+            # Return a success response with the new user's username
             return JsonResponse({'status': 'success', 'message': f'User {user.username} created successfully'})
         else:
+            # If form validation fails, return detailed error messages
             return JsonResponse({'status': 'error', 'message': 'Invalid user data', 'errors': form.errors}, status=400)
+    # If the request was not a POST, return an error response
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
 @login_required # Requires login to get user data (even just for list display)
@@ -848,23 +853,7 @@ def _handle_monthly_inspection(request, form_class, location_value):
         'chemical_containers_closed_and_disposed', 'spill_kit_accessible',
         'bio_sample_temp_maintained', 'lab_consumables_stock_ok', 'storage_conditions_ok', 'training_up_to_date',
     ]
-    
-    ALRAES_INVERTED_FIELDS = [
-        'over_accumulation_fish_waste',  # "Is there any over accumulation..." - No is good
-        'visible_impact_on_marine_life',  # "Is there any visible impact..." - No is good
-        'significant_variations_water_quality',  # "Are there any significant variations..." - No is good
-        'unusual_incidents_observations',  # "Were there any unusual incidents..." - No is good
-        'record_environmental_incidents_past_week',  # "Is there a record of any environmental incidents..." - No is good
-    ]
-    
-    ALGAE_FACILITY_INVERTED_FIELDS = [
-        'signs_overflow_leakage_evaporation_pond',  # "Are there any signs of overflow..." - No is good
-        'visible_mosquito_larvae_presence',  # "Is there any visible mosquito..." - No is good
-        'other_signs_pests_within_site',  # "Are there any other signs of pests..." - No is good
-        'visible_plume_emissions_spray_dryer',  # "Are there any visible plume emissions..." - No is good
-        'odours_from_site_operations',  # "Are there any odours from the site operations..." - No is good
-    ]
-    
+        
     ALRAES_FIELDS = [
         'over_accumulation_fish_waste', 'nets_checked_for_damage', 'cages_secured_to_sea_bed',
         'operations_minimal_disturbance', 'visible_impact_on_marine_life',
@@ -889,6 +878,23 @@ def _handle_monthly_inspection(request, form_class, location_value):
         'all_drums_containers_free_stagnant_water', 'visible_mosquito_larvae_presence',
         'other_signs_pests_within_site', 'visible_plume_emissions_spray_dryer', 'odours_from_site_operations',
     ]
+
+    ALRAES_INVERTED_FIELDS = [
+        'over_accumulation_fish_waste',  # "Is there any over accumulation..." - No is good
+        'visible_impact_on_marine_life',  # "Is there any visible impact..." - No is good
+        'significant_variations_water_quality',  # "Are there any significant variations..." - No is good
+        'unusual_incidents_observations',  # "Were there any unusual incidents..." - No is good
+        'record_environmental_incidents_past_week',  # "Is there a record of any environmental incidents..." - No is good
+    ]
+    
+    ALGAE_FACILITY_INVERTED_FIELDS = [
+        'signs_overflow_leakage_evaporation_pond',  # "Are there any signs of overflow..." - No is good
+        'visible_mosquito_larvae_presence',  # "Is there any visible mosquito..." - No is good
+        'other_signs_pests_within_site',  # "Are there any other signs of pests..." - No is good
+        'visible_plume_emissions_spray_dryer',  # "Are there any visible plume emissions..." - No is good
+        'odours_from_site_operations',  # "Are there any odours from the site operations..." - No is good
+    ]
+
     if request.method == 'POST':
         form = form_class(request.POST)
         if form.is_valid():

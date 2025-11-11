@@ -6,7 +6,7 @@ from django.contrib.auth.models import User, Group # Import User and Group
 class AuditForm(forms.ModelForm):
     class Meta:
         model = Audit
-        fields = ['audit_type', 'fire_extinguishers_checked', 'emergency_exits_inspected', ]  # add more fields as needed
+        fields = ['audit_type', 'fire_extinguishers_checked', 'emergency_exits_inspected', ]  
 
 class MonthlyAuditForm(forms.ModelForm):
     class Meta:
@@ -27,7 +27,7 @@ class MonthlyAuditForm(forms.ModelForm):
 class BiannualAuditForm(forms.ModelForm):
     class Meta:
         model = Audit
-        fields = ['date', 'location', 'number_of_closeouts', 'number_of_nonconformances']  # Replace as needed
+        fields = ['date', 'location', 'number_of_closeouts', 'number_of_nonconformances']  
 
 class HazardousWasteForm(forms.ModelForm):
     class Meta:
